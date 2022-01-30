@@ -36,13 +36,12 @@ def hue(signal):
 
 
 class Edge:
-    def __init__(self, start, end, fixed_activation=0):
+    def __init__(self, start, end):
         self.id = f'{start.id}_{end.id}'
         g.edges[self.id] = self
         self.activations = []
         self.start = start
         self.end = end
-        self.fixed_activation = fixed_activation
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self.id})'
@@ -64,8 +63,6 @@ class Edge:
                 Line(circle=[cx, cy, 3], width=2)
 
     def activate(self, n):
-        if self.fixed_activation:
-            n = self.fixed_activation
         if n not in self.activations:
             self.activations.append(n)
             self.end.activate(n)
@@ -79,8 +76,8 @@ class Edge:
         return g.edges.get(f'{start.id}_{end.id}')
 
     @staticmethod
-    def get_or_create(start, end, fixed_activation=0):
-        return Edge.get(start, end) or __class__(start, end, fixed_activation=fixed_activation)
+    def get_or_create(start, end):
+        return Edge.get(start, end) or __class__(start, end)
 
 
 class MergeEdge:
@@ -155,8 +152,8 @@ class Node:
     def get_label(self):
         return self.id
 
-    def connect(self, other, fixed_activation=0):
-        edge = Edge.get_or_create(self, other, fixed_activation)
+    def connect(self, other):
+        edge = Edge.get_or_create(self, other)
         if edge not in self.edges_out:
             self.edges_out.append(edge)
         if edge not in other.edges_in:
