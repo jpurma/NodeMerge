@@ -456,8 +456,7 @@ class WordPartList:
     def pick_next(self):
         li = self.current_item
         if not li:
-            self.reset()
-            li = self.pick_first()
+            return
         i = li.lex_parts.index(li)
         self.prev_item = self.current_item
         self.prev_i = self.current_i
@@ -471,6 +470,7 @@ class WordPartList:
             self.current_i = len(self.word_parts) - 1
         else:
             self.current_item = None
+        return self.current_item
 
     def can_merge(self):
         return self.prev_item and self.current_item
@@ -501,9 +501,6 @@ class Network(Widget):
         super().__init__(*args, **kwargs)
         self.nodes = {}
         self.edges = {}
-        self.mergeEdgesByHead = {}
-        self.mergeEdgesByArgument = {}
-        self.adjunctions = {}
         self.lexicon = {}
         self.features = {}
         self.numeration = []
@@ -588,6 +585,17 @@ class Network(Widget):
         else:
             head.add_merge(arg)
 
+    def reset(self):
+        self.words.reset()
+        for edge in list(self.edges.values()):
+            if isinstance(edge, (MergeEdge, AdjunctEdge)):
+                del self.edges[edge.id]
+        for node in self.nodes.values():
+            if isinstance(node, LexicalNode):
+                node.head_edges.clear()
+                node.arg_edges.clear()
+                node.adjunctions.clear()
+
     def next_pair(self):
         if not self.words:
             return
@@ -596,7 +604,9 @@ class Network(Widget):
             self.ugly_adjunct_block = True
             self.words.traverse_to_previous_free_item()
         else:
-            self.words.pick_next()
+            if not self.words.pick_next():
+                self.reset()
+                self.words.pick_first()
         self.clear_activations()
         if self.words.can_merge():
             self.activate()
