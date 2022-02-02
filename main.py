@@ -510,12 +510,6 @@ class Network(Widget):
         self.merge_pair = None
         self.merge_ok = None
         self.words = None
-        self.prev_word_i = 0
-        self.prev_part_i = 0
-        self.current_word_i = 0
-        self.current_part_i = 0
-        self.prev_lex_item = None
-        self.current_lex_item = None
         self.next_button = Button(text='Next', font_size=14)
         self.next_button.x = 20
         self.next_button.y = 20
