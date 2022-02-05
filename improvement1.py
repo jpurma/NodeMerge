@@ -192,7 +192,7 @@ class Node:
             for activation in self.activations:
                 Color(hue(activation), 0.8, 0.5, mode='hsv')
                 Line(circle=[self.x, self.y, r], width=2)
-                r += 3
+                r += 4
 
     @staticmethod
     def find_edge(edges, start=None, end=None):
@@ -247,6 +247,7 @@ class LexicalNode(Node):
             arg.head_edges.remove(found_edge)
 
     def add_adjunction(self, other):
+        print('add adjunction')
         if self.find_edge(self.adjunctions, start=other) or self.find_edge(self.adjunctions, end=other):
             return
         edge = AdjunctEdge(self, other)
@@ -407,11 +408,11 @@ class PairMergeNode(Node):
     def activate(self, n):
         if n not in self.activations:
             self.activations.append(n)
-            if len(self.activations) > 1 and not g.ugly_adjunct_block:
+            if len(self.activations) > 2:
                 for out in self.edges_out:
                     for n in self.activations:
-                        print('activation on edge ', out, out.start, out.end, n)
-                        out.activate(n)
+                        if n < 100:  # filter out structural signals
+                            out.activate(n)
         self.active = len(self.activations) > 1
 
 
@@ -419,6 +420,15 @@ class MergeOkNode(Node):
     def activate(self, n):
         if n not in self.activations:
             self.activations.append(n)
+        self.active = bool(self.activations)
+
+
+class IsClosestNode(Node):
+    def activate(self, n):
+        if n not in self.activations:
+            self.activations.append(n)
+            for out in self.edges_out:
+                out.activate(n)
         self.active = bool(self.activations)
 
 
@@ -502,6 +512,7 @@ class Network(Widget):
         self.merge_left = None
         self.merge_pair = None
         self.merge_ok = None
+        self.is_closest = None
         self.words = None
         self.next_button = Button(text='Next', font_size=14)
         self.next_button.x = 20
@@ -596,6 +607,8 @@ class Network(Widget):
                 self.words.pick_first()
         self.clear_activations()
         if self.words.can_merge():
+            if not self.ugly_adjunct_block:
+                self.is_closest.activate(101)
             self.activate()
         self.update_canvas()
 
@@ -621,6 +634,10 @@ class Network(Widget):
         self.merge_pair.set_pos(WIDTH / 2 + 256, row * row_height)
         self.merge_ok = self.add(MergeOkNode, 'OK')
         self.merge_ok.set_pos(100, HEIGHT / 2)
+        self.is_closest = self.add(IsClosestNode, 'Closest')
+        self.is_closest.set_pos(WIDTH - 150, HEIGHT / 2)
+        self.is_closest.connect(self.merge_pair)
+
         row += 1
         for num in range(N_SIZE):
             x = WIDTH / (N_SIZE + 1) * (num + 1)
