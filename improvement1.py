@@ -14,18 +14,18 @@ sitä :: N:prt a:D|n
 Merjaa :: N:prt adjL:D <N:gen a:n
 jonka :: adjL:n =T, N:acc
 Pekka :: N:nom3sg n a:n
-näki :: T:pst =N:nom3sg, =N:prt|acc
+näki :: =N:nom3sg, T:pst, =N:prt|acc
 peruuntui :: =N:nom3sg T:pst
-# ei :: =v =nom3sg adjL:advNeg
+# ei :: =v =N:nom3sg adjL:advNeg
 # enää :: a:advNeg
-# rakasta :: v =prt
+# rakasta :: v =N:prt
 # rakastaa :: =nom3sg =prt
 """
 
 # sentence = "Pekka ei enää rakasta Merjaa"
 sentence = "sopimus ihailla sitä Merjaa jonka Pekka näki peruuntui"
 
-N_SIZE = 2
+N_SIZE = 3
 WIDTH = 1600
 HEIGHT = 1024
 
@@ -46,6 +46,10 @@ class Edge:
     def __repr__(self):
         return f'{self.__class__.__name__}({self.id})'
 
+    @property
+    def signal(self):
+        return self.activations[0] if self.activations else None
+
     def draw(self):
         cx = self.start.x + (self.end.x - self.start.x) * .9
         cy = self.start.y + (self.end.y - self.start.y) * .9
@@ -56,10 +60,14 @@ class Edge:
             x_diff = 0
             y_diff = 0
             for activation in self.activations:
-                Color(hue(activation), 0.8, 0.5, mode='hsv')
-                Line(points=[self.start.x + x_diff, self.start.y + y_diff, self.end.x + x_diff, self.end.y + y_diff], width=2)
-                Line(circle=[cx, cy, 3], width=2)
-                x_diff += 3
+                if not isinstance(activation, tuple):
+                    activation = [activation]
+                for signal in activation:
+                    Color(hue(signal), 0.8, 0.5, mode='hsv')
+                    Line(points=[self.start.x + x_diff, self.start.y + y_diff, self.end.x + x_diff, self.end.y + y_diff], width=2)
+                    Line(circle=[cx, cy, 3], width=2)
+                    x_diff += 2
+                x_diff += 2
 
     def activate(self, n):
         if n not in self.activations:
@@ -81,13 +89,16 @@ class Edge:
 
 class MergeEdge:
     def __init__(self, start, end):
-        print('** creating merge edge ', start.id, end.id)
+        print(f'** creating merge edge arg: {start.id} head: {end.id}')
         self.id = MergeEdge.create_id(start, end)
         g.edges[self.id] = self
         self.active = True
         self.start = start
         self.end = end
-        self.signal = self.head.activations[0]
+        self.signal = self.start.activations[0]
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.id})'
 
     @property
     def arg(self):
@@ -99,7 +110,7 @@ class MergeEdge:
 
     def draw(self):
         cx = self.start.x + (self.end.x - self.start.x) * .8
-        cy = self.start.y + abs(self.end.x - self.start.x) * .3
+        cy = self.start.y + (self.end.x - self.start.x) * .3
         with g.canvas:
             Color(hue(self.signal), .5, .6, mode='hsv')
             Bezier(points=[self.start.x, self.start.y, cx, cy, self.end.x, self.end.y], width=3)
@@ -120,6 +131,9 @@ class AdjunctEdge:
         self.start = start
         self.end = end
         self.signal = self.start.activations[0]
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.id})'
 
     def draw(self):
         with g.canvas:
@@ -190,9 +204,12 @@ class Node:
             r = 16
             Line(circle=[self.x, self.y, r], width=1)
             for activation in self.activations:
-                Color(hue(activation), 0.8, 0.5, mode='hsv')
-                Line(circle=[self.x, self.y, r], width=2)
-                r += 4
+                if not isinstance(activation, tuple):
+                    activation = [activation]
+                for signal in activation:
+                    Color(hue(signal), 0.8, 0.5, mode='hsv')
+                    Line(circle=[self.x, self.y, r], width=2)
+                    r += 4
 
     @staticmethod
     def find_edge(edges, start=None, end=None):
@@ -239,16 +256,10 @@ class LexicalNode(Node):
                 edge.activate(n)
         self.active = bool(self.activations)
 
-    def remove_merge(self, arg):
-        if found_edge := self.find_edge(self.arg_edges, start=arg):
-            print('** removing edge ', arg.id, self.id, found_edge.id)
-            del g.edges[found_edge.id]
-            self.arg_edges.remove(found_edge)
-            arg.head_edges.remove(found_edge)
-
     def add_adjunction(self, other):
-        print('add adjunction')
+        print('add adjunction ', self.id, other.id)
         if self.find_edge(self.adjunctions, start=other) or self.find_edge(self.adjunctions, end=other):
+            print('exists already')
             return
         edge = AdjunctEdge(self, other)
         self.adjunctions.append(edge)
@@ -298,16 +309,26 @@ class PosFeatureNode(FeatureNode):
                 feat.connect(self)
 
     def activate(self, n):
-        if (self.adjunct_licensor and n not in self.activations) or (not self.adjunct_licensor and not self.activations):
-            self.activations.append(n)
-            for out in self.edges_out:
-                out.activate(n)
-            self.active = True
-        if not self.activations:
-            self.active = False
+        if self.adjunct_licensor:
+            if n not in self.activations:
+                self.activations.append(n)
+                if len(self.activations) > 1:
+                    for out in self.edges_out:
+                        out.activate(tuple(self.activations))
+                    self.active = True
+                else:
+                    self.active = False
+        else:
+            if n not in self.activations:
+                self.activations.append(n)
+                for out in self.edges_out:
+                    out.activate(n)
+                self.active = True
+            if not self.activations:
+                self.active = False
 
 
-class NegFeatureNode(Node):
+class NegFeatureNode(FeatureNode):
     color = [1.0, 0, 0, 0.5]
     signs = '-=<>'
 
@@ -338,13 +359,18 @@ class NegFeatureNode(Node):
             for e in self.edges_in:
                 # use activation from active lexical item, not that of supporting feature
                 if isinstance(e.start, (LexicalNode, CategoryNode)) and e.activations:
-                    i = e.activations[0]
-                    lex_activations.append(i)
+                    for signal in e.activations:
+                        if signal not in lex_activations:
+                            lex_activations.append(signal)
                 elif e.activations:
-                    feat_activations.append(e.activations[0])
+                    for signal in e.activations:
+                        if signal not in lex_activations:
+                            feat_activations.append(signal)
             if lex_activations and feat_activations:
-                for out in self.edges_out:
-                    out.activate(i)
+                for head_signal in lex_activations:
+                    for arg_signal in feat_activations:
+                        for out in self.edges_out:
+                            out.activate((head_signal, arg_signal))
                 self.active = True
             else:
                 self.active = False
@@ -376,59 +402,91 @@ class NumerationNode(Node):
     def activate(self, n):
         if n not in self.activations:
             self.activations.append(n)
-            if len(self.activations) > 1:
-                print(f'at {self.id} adding merge ', self.activations)
-                g.add_merge(self.activations[0], self.activations[1])
-        self.active = len(self.activations) > 1
-
-
-class LeftMergeNode(Node):
-    color = [1.0, 1.0, 0, .5]
-
-    def activate(self, n):
-        if n not in self.activations:
-            self.activations.append(n)
-            for out in self.edges_out:
-                out.activate(n)
-        self.active = bool(self.activations)
-
-
-class RightMergeNode(Node):
-    color = [1.0, 1.0, 0, .5]
-
-    def activate(self, n):
-        if n not in self.activations:
-            self.activations.append(n)
-            for out in self.edges_out:
-                out.activate(n)
-        self.active = bool(self.activations)
-
-
-class PairMergeNode(Node):
-    def activate(self, n):
-        if n not in self.activations:
-            self.activations.append(n)
-            if len(self.activations) > 2:
+            for signal in self.activations:
                 for out in self.edges_out:
-                    for n in self.activations:
-                        if n < 100:  # filter out structural signals
-                            out.activate(n)
-        self.active = len(self.activations) > 1
+                    out.activate(signal)
+        self.active = bool(self.activations)
+
+
+class MergeNode(Node):
+    color = [1.0, 1.0, 0, .5]
+
+    def activate(self, n):
+        if n not in self.activations:
+            numeration_signals = [e.signal for e in self.edges_in
+                                  if e.signal and isinstance(e.start, NumerationNode)]
+            if len(numeration_signals) < 2:
+                return
+            left, right, *foo = numeration_signals
+            head_signals, arg_signals = self.head_and_arg(left, right)
+            accepted_signals = []
+            for e in self.edges_in:
+                if e.activations and isinstance(e.start, FeatureNode):
+                    for head_signal_in, arg_signal_in in e.activations:
+                        if head_signal_in in head_signals and arg_signal_in in arg_signals:
+                            accepted_signals.append((head_signal_in, arg_signal_in))
+            if n in accepted_signals and n not in self.activations:
+                self.activations.append(n)
+                self.add_merge(n)
+                for out in self.edges_out:
+                    for n in accepted_signals:
+                        out.activate(n)
+        self.active = bool(self.activations)
+
+
+class LeftMergeNode(MergeNode):
+
+    def head_and_arg(self, left, right):
+        return {left}, {right}
+
+    def add_merge(self, signals):
+        print(f'at {self.id} adding left merge {signals[0]}<-{signals[1]}')
+        g.add_merge(signals[0], signals[1])
+
+
+class RightMergeNode(MergeNode):
+
+    def head_and_arg(self, left, right):
+        return {right}, {left}
+
+    def add_merge(self, signals):
+        print(f'at {self.id} adding right merge {signals[0]}->{signals[1]}')
+        g.add_merge(signals[0], signals[1])
+
+
+class PairMergeNode(MergeNode):
+
+    def activate(self, n):
+        if n not in self.activations:
+            inhibiting_signals = {e.signal for e in self.edges_in
+                                  if e.signal and isinstance(e.start, MergeNode)}
+            if inhibiting_signals:
+                return
+            numeration_signals = [e.signal for e in self.edges_in
+                                  if e.signal and isinstance(e.start, NumerationNode)]
+            if len(numeration_signals) < 2:
+                return
+            accepted_signals = []
+            for e in self.edges_in:
+                if e.activations and isinstance(e.start, FeatureNode):
+                    print(e, e.activations)
+                    for signal1_in, signal2_in in e.activations:
+                        if signal1_in in numeration_signals and signal2_in in numeration_signals:
+                            accepted_signals.append((signal1_in, signal2_in))
+            if n in accepted_signals and n not in self.activations:
+                self.activations.append(n)
+                print(f'at {self.id} adding pair merge ', n)
+                g.add_adjunction(n[0], n[1])
+                for out in self.edges_out:
+                    for n in accepted_signals:
+                        out.activate(n)
+        self.active = bool(self.activations)
 
 
 class MergeOkNode(Node):
     def activate(self, n):
         if n not in self.activations:
             self.activations.append(n)
-        self.active = bool(self.activations)
-
-
-class IsClosestNode(Node):
-    def activate(self, n):
-        if n not in self.activations:
-            self.activations.append(n)
-            for out in self.edges_out:
-                out.activate(n)
         self.active = bool(self.activations)
 
 
@@ -440,8 +498,10 @@ class WordPartList:
         self.word_parts = []
         self.current_item = None
         self.prev_item = None
+        self.closest_item = None
         self.current_i = 0
         self.prev_i = 0
+        self.closest_i = 0
 
     def reset(self):
         self.words_left = list(reversed(self.original))
@@ -449,6 +509,8 @@ class WordPartList:
         self.prev_item = None
         self.current_i = 0
         self.current_item = None
+        self.closest_i = 0
+        self.closest_item = None
         self.word_parts = []
 
     def pick_first(self):
@@ -463,6 +525,8 @@ class WordPartList:
         i = li.lex_parts.index(li)
         self.prev_item = self.current_item
         self.prev_i = self.current_i
+        self.closest_item = self.current_item
+        self.closest_i = self.current_i
         if i < len(li.lex_parts) - 1:
             self.current_item = li.lex_parts[i + 1]
             self.word_parts.append(self.current_item)
@@ -484,15 +548,16 @@ class WordPartList:
     def traverse_to_previous_free_item(self):
         self.prev_i -= 1
         if self.prev_i >= 0:
-            p = self.word_parts[self.prev_i]
+            part = self.word_parts[self.prev_i]
             # if previous word is in a group of adjuncts, walk to first of them, but collect heads on the way in order
             # to decide if the group already belongs to a head
-            heads = list(p.head_edges)
-            while [e for e in p.adjunctions if e.end is p]:
+            heads = list(part.head_edges)
+            print(part, part.head_edges)
+            while [e for e in part.adjunctions if e.end is part]:
                 self.prev_i -= 1
-                p = self.word_parts[self.prev_i]
-                heads += list(p.head_edges)
-            self.prev_item = p
+                part = self.word_parts[self.prev_i]
+                heads += list(part.head_edges)
+            self.prev_item = part
             if heads:
                 self.traverse_to_previous_free_item()
         else:
@@ -512,7 +577,6 @@ class Network(Widget):
         self.merge_left = None
         self.merge_pair = None
         self.merge_ok = None
-        self.is_closest = None
         self.words = None
         self.next_button = Button(text='Next', font_size=14)
         self.next_button.x = 20
@@ -562,26 +626,23 @@ class Network(Widget):
                 self.lexicon[word] = lex_node
                 first = False
 
-    def add_merge(self, arg_signal, head_signal):
-        arg = None
-        head = None
-        for lex_item in self.lexicon.values():
-            if arg_signal in lex_item.activations:
-                arg = lex_item
-                if arg and head:
-                    break
-            if head_signal in lex_item.activations:
-                head = lex_item
-                if arg and head:
-                    break
-        if not (arg and head):
-            print('cannot find arg and head: ', arg_signal, arg, head_signal, head)
-            return
-        if head.find_edge(head.head_edges, end=arg):
-            arg.remove_merge(head)
-            head.add_adjunction(arg)
-        else:
+    def find_by_signal(self, signal):
+        for lex_item in reversed(self.lexicon.values()):
+            if signal in lex_item.activations:
+                return lex_item
+
+    def add_merge(self, head_signal, arg_signal):
+        head = self.find_by_signal(head_signal)
+        arg = self.find_by_signal(arg_signal)
+        if head and arg:
             head.add_merge(arg)
+
+    def add_adjunction(self, signal1, signal2):
+        head = self.find_by_signal(signal1)
+        other = self.find_by_signal(signal2)
+        print('add adjunction between ', signal1, signal2, head, other)
+        if head and other:
+            head.add_adjunction(other)
 
     def reset(self):
         self.words.reset()
@@ -597,9 +658,7 @@ class Network(Widget):
     def next_pair(self):
         if not self.words:
             return
-        self.ugly_adjunct_block = False
         if self.words.can_merge() and not self.merge_ok.active:
-            self.ugly_adjunct_block = True
             self.words.traverse_to_previous_free_item()
         else:
             if not self.words.pick_next():
@@ -607,8 +666,6 @@ class Network(Widget):
                 self.words.pick_first()
         self.clear_activations()
         if self.words.can_merge():
-            if not self.ugly_adjunct_block:
-                self.is_closest.activate(101)
             self.activate()
         self.update_canvas()
 
@@ -634,9 +691,6 @@ class Network(Widget):
         self.merge_pair.set_pos(WIDTH / 2 + 256, row * row_height)
         self.merge_ok = self.add(MergeOkNode, 'OK')
         self.merge_ok.set_pos(100, HEIGHT / 2)
-        self.is_closest = self.add(IsClosestNode, 'Closest')
-        self.is_closest.set_pos(WIDTH - 150, HEIGHT / 2)
-        self.is_closest.connect(self.merge_pair)
 
         row += 1
         for num in range(N_SIZE):
@@ -649,12 +703,18 @@ class Network(Widget):
         row += 1
         for n, cat_node in enumerate(self.categories):
             cat_node.set_pos(WIDTH / (len(self.categories) + 1) * (n + 1), row * row_height)
-        left, right, *rest = self.numeration
-        self.merge_right.connect(left)
+        left, closest, right, *rest = self.numeration
+        left.connect(self.merge_left)
+        right.connect(self.merge_left)
+        left.connect(self.merge_right)
+        right.connect(self.merge_right)
         self.merge_right.connect(self.merge_ok)
-        self.merge_left.connect(right)
+        self.merge_right.connect(self.merge_pair)
         self.merge_left.connect(self.merge_ok)
-        self.merge_pair.connect(left)
+        self.merge_left.connect(self.merge_pair)
+        closest.connect(self.merge_pair)
+        right.connect(self.merge_pair)
+        self.merge_pair.connect(closest)
         self.merge_pair.connect(right)
         self.merge_pair.connect(self.merge_ok)
         row += 1
@@ -672,8 +732,6 @@ class Network(Widget):
             if feat_node.name == 'adjL':
                 feat_node.connect(self.merge_pair)
                 feat_node.connect_adjuncts()
-            if feat_node.name == 'a' and feat_node.values:
-                feat_node.connect(self.merge_pair)
             feat_node.set_pos(x, y)
         row += 1
         y_shift = 0
@@ -696,14 +754,18 @@ class Network(Widget):
 
     def activate(self):
         left = self.words.prev_item
+        closest = self.words.closest_item
         right = self.words.current_item
-        left_signal = self.words.prev_i
-        right_signal = self.words.current_i
-        print(f'*** activate {left.id}+{right.id}')
+        left_signal = self.words.prev_i + 1
+        closest_signal = self.words.closest_i + 1
+        right_signal = self.words.current_i + 1
+        print(f'*** activate {left.id}+{closest.id}+{right.id}')
+        self.numeration[2].activate(right_signal)
         self.numeration[0].activate(left_signal)
-        self.numeration[1].activate(right_signal)
-        left.activate(left_signal)
+        self.numeration[1].activate(closest_signal)
         right.activate(right_signal)
+        left.activate(left_signal)
+        closest.activate(closest_signal)
         self.update_canvas()
 
 
