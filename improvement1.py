@@ -314,7 +314,7 @@ class PosFeatureNode(FeatureNode):
                 self.activations.append(n)
                 if len(self.activations) > 1:
                     for out in self.edges_out:
-                        out.activate(tuple(self.activations))
+                        out.activate(tuple(self.activations[:2]))
                     self.active = True
                 else:
                     self.active = False
@@ -413,19 +413,21 @@ class MergeNode(Node):
 
     def activate(self, n):
         if n not in self.activations:
-            numeration_signals = [e.signal for e in self.edges_in
-                                  if e.signal and isinstance(e.start, NumerationNode)]
+            numeration_signals = [e.activations for e in self.edges_in
+                                      if e.signal and isinstance(e.start, NumerationNode)]
             if len(numeration_signals) < 2:
                 return
-            left, right, *foo = numeration_signals
-            head_signals, arg_signals = self.head_and_arg(left, right)
+            left_num, right_num, *foo = numeration_signals
+            if not (left_num and right_num):
+                return
+            head_signals, arg_signals = self.head_and_arg(left_num, right_num)
             accepted_signals = []
             for e in self.edges_in:
                 if e.activations and isinstance(e.start, FeatureNode):
                     for head_signal_in, arg_signal_in in e.activations:
                         if head_signal_in in head_signals and arg_signal_in in arg_signals:
                             accepted_signals.append((head_signal_in, arg_signal_in))
-            if n in accepted_signals and n not in self.activations:
+            if n in accepted_signals and not self.activations:
                 self.activations.append(n)
                 self.add_merge(n)
                 for out in self.edges_out:
@@ -437,7 +439,7 @@ class MergeNode(Node):
 class LeftMergeNode(MergeNode):
 
     def head_and_arg(self, left, right):
-        return {left}, {right}
+        return set(left), set(right)
 
     def add_merge(self, signals):
         print(f'at {self.id} adding left merge {signals[0]}<-{signals[1]}')
@@ -447,7 +449,7 @@ class LeftMergeNode(MergeNode):
 class RightMergeNode(MergeNode):
 
     def head_and_arg(self, left, right):
-        return {right}, {left}
+        return set(right), set(left)
 
     def add_merge(self, signals):
         print(f'at {self.id} adding right merge {signals[0]}->{signals[1]}')
@@ -469,7 +471,6 @@ class PairMergeNode(MergeNode):
             accepted_signals = []
             for e in self.edges_in:
                 if e.activations and isinstance(e.start, FeatureNode):
-                    print(e, e.activations)
                     for signal1_in, signal2_in in e.activations:
                         if signal1_in in numeration_signals and signal2_in in numeration_signals:
                             accepted_signals.append((signal1_in, signal2_in))
@@ -497,19 +498,13 @@ class WordPartList:
         self.lexicon = lexicon
         self.word_parts = []
         self.current_item = None
-        self.prev_item = None
+        self.prev_items = []
         self.closest_item = None
-        self.current_i = 0
-        self.prev_i = 0
-        self.closest_i = 0
 
     def reset(self):
         self.words_left = list(reversed(self.original))
-        self.prev_i = 0
-        self.prev_item = None
-        self.current_i = 0
+        self.prev_items = []
         self.current_item = None
-        self.closest_i = 0
         self.closest_item = None
         self.word_parts = []
 
@@ -518,50 +513,62 @@ class WordPartList:
         self.word_parts.append(self.current_item)
         return self.current_item
 
+    def print_state(self):
+        print(f'''prev_items: {[p.id for p in reversed(self.prev_items)]} closest_item: {self.closest_item and
+            repr(self.closest_item.id)} current_item: {self.current_item and repr(self.current_item.id)}''')
+
     def pick_next(self):
         li = self.current_item
         if not li:
             return
         i = li.lex_parts.index(li)
-        self.prev_item = self.current_item
-        self.prev_i = self.current_i
         self.closest_item = self.current_item
-        self.closest_i = self.current_i
         if i < len(li.lex_parts) - 1:
             self.current_item = li.lex_parts[i + 1]
             self.word_parts.append(self.current_item)
-            self.current_i = len(self.word_parts) - 1
         elif self.words_left:
             self.current_item = self.lexicon[self.words_left.pop()]
             self.word_parts.append(self.current_item)
-            self.current_i = len(self.word_parts) - 1
         else:
             self.current_item = None
+        self.prev_items = self.collect_previous_items() if self.current_item else []
+        self.print_state()
         return self.current_item
 
     def can_merge(self):
-        return self.prev_item and self.current_item
+        return self.prev_items and self.current_item
 
     def same_word(self, lex_item, other):
         return lex_item and other and lex_item.lex_parts is other.lex_parts
 
-    def traverse_to_previous_free_item(self):
-        self.prev_i -= 1
-        if self.prev_i >= 0:
-            part = self.word_parts[self.prev_i]
-            # if previous word is in a group of adjuncts, walk to first of them, but collect heads on the way in order
-            # to decide if the group already belongs to a head
-            heads = list(part.head_edges)
-            print(part, part.head_edges)
-            while [e for e in part.adjunctions if e.end is part]:
-                self.prev_i -= 1
-                part = self.word_parts[self.prev_i]
-                heads += list(part.head_edges)
-            self.prev_item = part
-            if heads:
-                self.traverse_to_previous_free_item()
-        else:
-            self.prev_item = None
+    def collect_previous_items(self):
+        def collect_adj_parts(adj_part, adj_parts):
+            adj_parts.add(adj_part)
+            for e in adj_part.adjunctions:
+                if e.end is adj_part:
+                    collect_adj_parts(e.start, adj_parts)
+
+        part_stack = list(self.word_parts)
+        prev_items = []
+        current = part_stack.pop()
+        args = set()
+        inner_parts = current.lex_parts
+        a_parts = set()
+        while part_stack:
+            part = part_stack.pop()
+            if part not in a_parts:
+                a_parts = set()
+                collect_adj_parts(part, a_parts)
+                for a_part in a_parts:
+                    if [head_edge for head_edge in a_part.head_edges if head_edge.arg is a_part]:
+                        args |= a_parts
+            if part in inner_parts:
+                continue
+            else:
+                inner_parts = part.lex_parts
+                if part not in args:
+                    prev_items.append(part)
+        return prev_items
 
 
 class Network(Widget):
@@ -581,9 +588,8 @@ class Network(Widget):
         self.next_button = Button(text='Next', font_size=14)
         self.next_button.x = 20
         self.next_button.y = 20
-        self.ugly_adjunct_block = False
         self.add_widget(self.next_button)
-        self.next_button.on_press = self.next_pair
+        self.next_button.on_press = self.next_word
 
     def update_canvas(self, *args):
         self.canvas.clear()
@@ -655,15 +661,12 @@ class Network(Widget):
                 node.arg_edges.clear()
                 node.adjunctions.clear()
 
-    def next_pair(self):
+    def next_word(self):
         if not self.words:
             return
-        if self.words.can_merge() and not self.merge_ok.active:
-            self.words.traverse_to_previous_free_item()
-        else:
-            if not self.words.pick_next():
-                self.reset()
-                self.words.pick_first()
+        if not self.words.pick_next():
+            self.reset()
+            self.words.pick_first()
         self.clear_activations()
         if self.words.can_merge():
             self.activate()
@@ -714,8 +717,8 @@ class Network(Widget):
         self.merge_left.connect(self.merge_pair)
         closest.connect(self.merge_pair)
         right.connect(self.merge_pair)
-        self.merge_pair.connect(closest)
-        self.merge_pair.connect(right)
+        #self.merge_pair.connect(closest)
+        #self.merge_pair.connect(right)
         self.merge_pair.connect(self.merge_ok)
         row += 1
         y_shift = -100
@@ -753,19 +756,25 @@ class Network(Widget):
             edge.activations = []
 
     def activate(self):
-        left = self.words.prev_item
+        lefts = list(reversed(self.words.prev_items))
         closest = self.words.closest_item
         right = self.words.current_item
-        left_signal = self.words.prev_i + 1
-        closest_signal = self.words.closest_i + 1
-        right_signal = self.words.current_i + 1
-        print(f'*** activate {left.id}+{closest.id}+{right.id}')
-        self.numeration[2].activate(right_signal)
-        self.numeration[0].activate(left_signal)
-        self.numeration[1].activate(closest_signal)
+        left_signals = [self.words.word_parts.index(item) + 1 for item in lefts]
+        closest_signal = self.words.word_parts.index(self.words.closest_item) + 1
+        right_signal = self.words.word_parts.index(self.words.current_item) + 1
+        left_num, closest_num, right_num = self.numeration
+        closest_num.activations.clear()
+        closest_num.activate(closest_signal)
+        for left_signal in reversed(left_signals):
+            left_num.activate(left_signal)
+        right_num.activations.clear()
+        right_num.activate(right_signal)
         right.activate(right_signal)
-        left.activate(left_signal)
         closest.activate(closest_signal)
+        for left, left_signal in zip(lefts, left_signals):
+            left.activate(left_signal)
+        print(f'*** activate {[left.id for left in lefts]}+{closest.id}+{right.id}')
+
         self.update_canvas()
 
 
