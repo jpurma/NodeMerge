@@ -33,9 +33,20 @@ ja :: adjL:D|n
 Minttua :: N:prt adjL:D <N:gen a:n
 """
 
+test_lexicon3 = """
+Pekka :: N:nom3sg n a:n
+teki :: T:pst =N:nom3sg, =N:acc|prt
+hyvän :: a:acc|gen
+sopimuksen :: N:acc adjL:acc|gen =T:a-inf
+antaa :: T:a-inf =N:gen, v =N:acc|prt =N:lle =N:lla
+avaimen :: N:acc adjL:acc|gen =T:a-inf
+Merjalle :: N:lle
+"""
+
+
 sentence = "sopimus ihailla sitä Merjaa jonka Pekka näki peruuntui"
 #sentence = "Pekka ei enää rakasta Merjaa"
-#sentence = "Pekka ihaili Merjaa ja Merjaa"
+#sentence = "Pekka teki hyvän sopimuksen antaa hyvän avaimen Merjalle"
 
 N_SIZE = 3
 WIDTH = 1600
@@ -254,8 +265,6 @@ class LexicalNode(Node):
             if self.activations:
                 for out in self.edges_out:
                     out.activate(n)
-            #for edge in self.adjunctions:
-            #    edge.activate(n)
         self.active = bool(self.activations)
 
     @staticmethod
@@ -396,94 +405,69 @@ class CategoryNode(Node):
         self.active = bool(self.activations)
 
 
-class NumerationNode(Node):
-    color = [0, 0, 1.0, 0.5]
-
-    def __init__(self, label):
-        super().__init__(label)
-        g.numeration.append(self)
-
-    def activate(self, n):
-        if n not in self.activations:
-            self.activations.append(n)
-            for signal in self.activations:
-                for out in self.edges_out:
-                    out.activate(signal)
-        self.active = bool(self.activations)
-
-
 class MergeNode(Node):
     color = [1.0, 1.0, 0, .5]
 
+
+class LeftMergeNode(MergeNode):
     def activate(self, n):
-        if n not in self.activations:
-            numeration_signals = [e.activations for e in self.edges_in
-                                  if e.signal and isinstance(e.start, NumerationNode)]
-            if len(numeration_signals) < 2:
-                return
-            left_num, right_num, *foo = numeration_signals
-            if not (left_num and right_num):
-                return
-            head_signals, arg_signals = self.head_and_arg(left_num, right_num)
-            accepted_signals = []
-            for e in self.edges_in:
-                if e.activations and isinstance(e.start, FeatureNode):
-                    print('activations: ', e.activations)
-                    for head_signal_in, arg_signal_in in e.activations:
-                        if head_signal_in in head_signals and arg_signal_in in arg_signals:
-                            accepted_signals.append((head_signal_in, arg_signal_in))
-            if n in accepted_signals and not self.activations:
+        if self.activations:
+            self.active = True
+            return
+        arg_signal = g.words.current_item.signal
+        accepted_signals = []
+        for e in self.edges_in:
+            if e.activations and isinstance(e.start, FeatureNode):
+                for head_signal_in, arg_signal_in in e.activations:
+                    if arg_signal_in == arg_signal:
+                        accepted_signals.append((head_signal_in, arg_signal_in))
+        if accepted_signals:
+            accepted_signals.sort()
+            if n == accepted_signals[-1]:
                 self.activations.append(n)
-                self.add_merge(n)
+                print(f'at {self.id} adding left merge {n[0]}<-{n[1]}')
+                g.add_merge(n[0], n[1])
                 for out in self.edges_out:
                     for n in accepted_signals:
                         out.activate(n)
         self.active = bool(self.activations)
 
-    def head_and_arg(self, left, right):
-        return set(left), set(right)
-
-    def add_merge(self, signals):
-        pass
-
-
-class LeftMergeNode(MergeNode):
-
-    def head_and_arg(self, left, right):
-        return set(left), set(right)
-
-    def add_merge(self, signals):
-        print(f'at {self.id} adding left merge {signals[0]}<-{signals[1]}')
-        g.add_merge(signals[0], signals[1])
-
 
 class RightMergeNode(MergeNode):
-
-    def head_and_arg(self, left, right):
-        return set(right), set(left)
-
-    def add_merge(self, signals):
-        print(f'at {self.id} adding right merge {signals[0]}->{signals[1]}')
-        g.add_merge(signals[0], signals[1])
+    def activate(self, n):
+        if self.activations:
+            self.active = True
+            return
+        head_signal = g.words.current_item.signal
+        accepted_signals = []
+        for e in self.edges_in:
+            if e.activations and isinstance(e.start, FeatureNode):
+                for head_signal_in, arg_signal_in in e.activations:
+                    if head_signal_in == head_signal:
+                        accepted_signals.append((arg_signal_in, head_signal_in, arg_signal_in))
+        if accepted_signals:
+            accepted_signals.sort()
+            if n == tuple(accepted_signals[-1][1:]):
+                self.activations.append(n)
+                print(f'at {self.id} adding right merge {n[0]}->{n[1]}')
+                g.add_merge(n[0], n[1])
+                for out in self.edges_out:
+                    for n in accepted_signals:
+                        out.activate(n)
+        self.active = bool(self.activations)
 
 
 class PairMergeNode(MergeNode):
 
     def activate(self, n):
         if n not in self.activations:
-            inhibiting_signals = {e.signal for e in self.edges_in
-                                  if e.signal and isinstance(e.start, MergeNode)}
-            if inhibiting_signals:
-                return
-            numeration_signals = [e.signal for e in self.edges_in
-                                  if e.signal and isinstance(e.start, NumerationNode)]
-            if len(numeration_signals) < 2:
-                return
+            right_signal = g.words.current_item.signal
+            left_signal = right_signal - 1
             accepted_signals = []
             for e in self.edges_in:
                 if e.activations and isinstance(e.start, FeatureNode):
                     for signal1_in, signal2_in in e.activations:
-                        if signal1_in in numeration_signals and signal2_in in numeration_signals:
+                        if signal1_in == right_signal and signal2_in == left_signal:
                             accepted_signals.append((signal1_in, signal2_in))
             if n in accepted_signals and n not in self.activations:
                 self.activations.append(n)
@@ -607,7 +591,6 @@ class Network(Widget):
         self.edges = {}
         self.lexicon = {}
         self.features = {}
-        self.numeration = []
         self.categories = []
         self.merge_right = None
         self.merge_left = None
@@ -724,29 +707,13 @@ class Network(Widget):
         self.merge_ok.set_pos(100, HEIGHT / 2)
 
         row += 1
-        for num in range(N_SIZE):
-            x = WIDTH / (N_SIZE + 1) * (num + 1)
-            y = row * row_height
-            num_node = self.add(NumerationNode, f'N{num + 1}')
-            num_node.set_pos(x, y)
         lexicon_file = StringIO(test_lexicon)
         self.read_lexicon(lexicon_file)
         row += 1
         for n, cat_node in enumerate(self.categories):
             cat_node.set_pos(WIDTH / (len(self.categories) + 1) * (n + 1), row * row_height)
-        left, closest, right, *rest = self.numeration
-        left.connect(self.merge_left)
-        right.connect(self.merge_left)
-        left.connect(self.merge_right)
-        right.connect(self.merge_right)
         self.merge_right.connect(self.merge_ok)
-        self.merge_right.connect(self.merge_pair)
         self.merge_left.connect(self.merge_ok)
-        self.merge_left.connect(self.merge_pair)
-        closest.connect(self.merge_pair)
-        right.connect(self.merge_pair)
-        #self.merge_pair.connect(closest)
-        #self.merge_pair.connect(right)
         self.merge_pair.connect(self.merge_ok)
         row += 1
         y_shift = -100
@@ -787,16 +754,9 @@ class Network(Widget):
         lefts = list(reversed(self.words.prev_items))
         closest = self.words.closest_item
         right = self.words.current_item
-        left_num, closest_num, right_num = self.numeration
-        closest_num.activations.clear()
-        closest_num.activate(closest.signal)
-        for left in reversed(lefts):
-            left_num.activate(left.signal)
-        right_num.activations.clear()
-        right_num.activate(right.signal)
         right.li.activate(right.signal)
         closest.li.activate(closest.signal)
-        for left in lefts:
+        for left in reversed(lefts):
             left.li.activate(left.signal)
         print(f'*** activate {lefts}+{closest}+{right}')
         self.update_canvas()
