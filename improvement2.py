@@ -5,48 +5,10 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivy.graphics import *
+
+from lexicon2 import test_lexicon, sentence
+
 import math
-
-test_lexicon = """
-sopimus :: N:nom3sg adjL:D|a =T:a-inf
-ihailla :: T:a-inf, v =N:prt =N:lla
-#ihaili :: =N:nom3sg T:pst, =N:prt
-sitä :: N:prt a:D|n
-Merjaa :: N:prt adjL:D <N:gen a:n
-#Minttua :: N:prt adjL:D <N:gen a:n
-jonka :: adjL:n =T, N:acc
-Pekka :: N:nom3sg n a:n
-näki :: =N:nom3sg T:pst, =N:prt|acc
-peruuntui :: =N:nom3sg T:pst
-#ja :: adjL:D|n
-#ei :: =N:nom3sg, =v adjL:advNeg
-#enää :: a:advNeg
-#rakasta :: v, =N:prt
-#rakastaa :: =nom3sg T:pre, =N:prt
-"""
-
-test_lexicon2 = """
-Pekka :: N:nom3sg n a:n
-ihaili :: =N:nom3sg T:pst, =N:prt
-Merjaa :: N:prt adjL:D <N:gen a:n
-ja :: adjL:D|n
-Minttua :: N:prt adjL:D <N:gen a:n
-"""
-
-test_lexicon3 = """
-Pekka :: N:nom3sg n a:n
-teki :: T:pst =N:nom3sg, =N:acc|prt
-hyvän :: a:acc|gen
-sopimuksen :: N:acc adjL:acc|gen =T:a-inf
-antaa :: T:a-inf =N:gen, v =N:acc|prt =N:lle =N:lla
-avaimen :: N:acc adjL:acc|gen =T:a-inf
-Merjalle :: N:lle
-"""
-
-
-sentence = "sopimus ihailla sitä Merjaa jonka Pekka näki peruuntui"
-#sentence = "Pekka ei enää rakasta Merjaa"
-#sentence = "Pekka teki hyvän sopimuksen antaa hyvän avaimen Merjalle"
 
 N_SIZE = 3
 WIDTH = 1600
@@ -110,6 +72,15 @@ class Edge:
         return Edge.get(start, end) or __class__(start, end)
 
 
+class LexEdge(Edge):
+    @staticmethod
+    def get_or_create(start, end):
+        return LexEdge.get(start, end) or __class__(start, end)
+
+    def activate(self, n):
+        pass
+
+
 class MergeEdge:
     def __init__(self, start, end):
         print(f'** creating merge edge arg: {start} head: {end}')
@@ -138,7 +109,7 @@ class MergeEdge:
         cy = sn.y + (en.x - sn.x) * -.3
         with g.canvas:
             Color(hue(self.signal), .5, .6, mode='hsv')
-            Bezier(points=[sn.x, sn.y + self.start.signal, cx, cy, en.x, en.y + self.end.signal], width=3)
+            Bezier(points=[sn.x, sn.y + self.start.signal * 2, cx, cy, en.x, en.y + self.end.signal * 2], width=3)
 
     @staticmethod
     def create_id(start, end):
@@ -216,7 +187,14 @@ class Node:
         self.label_item = Label(text=self.id)
         self.label_item.x = self.x - 20
         self.label_item.y = self.y - 10
-        self.label_item.color = [1.0, 1.0, 0.4] if self.active else [0.7, 0.7, 0.7]
+        if g.words and g.words.current_item and g.words.current_item.li is self:
+            self.label_item.color = [1.0, 0.5, 0.5]
+        elif g.words and g.words.closest_item and g.words.closest_item.li is self:
+            self.label_item.color = [1.0, 0.4, 1.0]
+        elif self.active:
+            self.label_item.color = [1.0, 1.0, 0.4]
+        else:
+            self.label_item.color = [0.7, 0.7, 0.7]
         g.add_widget(self.label_item)
 
     def set_pos(self, x, y):
@@ -266,6 +244,19 @@ class LexicalNode(Node):
                 for out in self.edges_out:
                     out.activate(n)
         self.active = bool(self.activations)
+
+    def connect_lex_parts(self):
+        if len(self.lex_parts) == 1:
+            return
+        i = self.lex_parts.index(self)
+        if i + 1 == len(self.lex_parts):
+            return
+        other = self.lex_parts[i + 1]
+        edge = LexEdge.get_or_create(self, other)
+        if edge not in self.edges_out:
+            self.edges_out.append(edge)
+        if edge not in other.edges_in:
+            other.edges_in.append(edge)
 
     @staticmethod
     def add_adjunction(first, second):
@@ -347,6 +338,7 @@ class NegFeatureNode(FeatureNode):
 
     def __init__(self, fstring):
         super().__init__(fstring)
+        self.banned_signals = []
         self.sign = fstring[0]
         name_string = fstring[1:]
         if ':' in name_string:
@@ -369,11 +361,12 @@ class NegFeatureNode(FeatureNode):
             self.activations.append(n)
             lex_activations = []
             feat_activations = []
+            self.active = []
             for e in self.edges_in:
                 # use activation from active lexical item, not that of supporting feature
                 if isinstance(e.start, (LexicalNode, CategoryNode)) and e.activations:
                     for signal in e.activations:
-                        if signal not in lex_activations:
+                        if signal not in lex_activations and signal not in self.banned_signals:
                             lex_activations.append(signal)
                 elif e.activations:
                     for signal in e.activations:
@@ -381,14 +374,23 @@ class NegFeatureNode(FeatureNode):
                             feat_activations.append(signal)
             if lex_activations and feat_activations:
                 for head_signal in lex_activations:
+                    self.banned_signals.append(head_signal)
                     for arg_signal in feat_activations:
+                        self.active.append((head_signal, arg_signal))
                         for out in self.edges_out:
                             out.activate((head_signal, arg_signal))
-                self.active = True
             else:
-                self.active = False
+                self.active = []
         if not self.activations:
-            self.active = False
+            self.active = []
+
+    def activated_at(self, signal):
+        if not self.active:
+            return False
+        for out in self.edges_out:
+            for head_signal, arg_signal in out.activations:
+                if signal == head_signal:
+                    return True
 
 
 class CategoryNode(Node):
@@ -529,6 +531,17 @@ class WordPartList:
         self.word_parts.append(self.current_item)
         return self.current_item
 
+    def get_lex_parts(self, word_part):
+        """ return li:s parts as WordPart instances which include their place in the sentence """
+        lex_parts = word_part.li.lex_parts
+        if len(lex_parts) == 1:
+            return [word_part]
+        i = self.word_parts.index(word_part)
+        lex_part_i = lex_parts.index(word_part.li)
+        start = i - lex_part_i
+        end = i - lex_part_i + len(lex_parts)
+        return self.word_parts[start:end]
+
     def print_state(self):
         print(f'''prev_items: {list(reversed(self.prev_items))} closest_item: {self.closest_item
               } current_item: {self.current_item}''')
@@ -555,32 +568,57 @@ class WordPartList:
         return self.prev_items and self.current_item
 
     def collect_previous_items(self):
+        """ Seuraava haaste on tunnistaa tilanne, jossa sanan sisäinen elementti on arg, jolloin se koko sana on arg.
+
+        Oikeastaan tätä ei pitäisi luoda joka iteraatioaskelella uudestaan, tämän pitäisi perustua signaalien sammuttamiseen
+        silloin kun elementti on argumenttina.
+         """
+
+        def is_unsatisfied_blocker(b_part: WordPart):
+            for e in b_part.li.edges_out:
+                if isinstance(e.end, NegFeatureNode) and e.end.sign == '-' and not e.end.activated_at(b_part.signal):
+                    return True
+
         def collect_adj_parts(adj_part, adj_parts):
             adj_parts.add(adj_part)
             for e in adj_part.li.adjunctions:
                 if e.end == adj_part:
                     collect_adj_parts(e.start, adj_parts)
 
+        def collect_complex_parts(c_parts):
+            prev_li_parts = None
+            for c_part in set(c_parts):
+                if c_part.li.lex_parts is not prev_li_parts:
+                    c_parts |= set(self.get_lex_parts(c_part))
+                    prev_li_parts = c_part.li.lex_parts
+
         part_stack = list(self.word_parts)
         prev_items = []
         current = part_stack.pop()
         args = set()
         inner_parts = current.li.lex_parts
-        a_parts = set()
+        related_parts = set()
         while part_stack:
             part = part_stack.pop()
-            if part not in a_parts:
-                a_parts = set()
-                collect_adj_parts(part, a_parts)
-                for a_part in a_parts:
-                    if [head_edge for head_edge in a_part.li.head_edges if head_edge.arg == a_part]:
-                        args |= a_parts
+            if part not in related_parts:
+                related_parts = set()
+                collect_adj_parts(part, related_parts)
+                #collect_complex_parts(related_parts)
+                print(f'related parts for {part}: ', related_parts)
+                for related_part in related_parts:
+                    if [head_edge for head_edge in related_part.li.head_edges if head_edge.arg == related_part]:
+                        print(f'found one part being arg {related_part}, adding all related parts as args: ', related_parts)
+                        args |= related_parts
             if part.li in inner_parts:
                 continue
             else:
                 inner_parts = part.li.lex_parts
                 if part not in args:
                     prev_items.append(part)
+            # if is_unsatisfied_blocker(part):
+            #    break
+
+        print(f'current {current}, known args: ', args)
         return prev_items
 
 
@@ -740,6 +778,7 @@ class Network(Widget):
             if y_shift > 60:
                 y_shift = 0
             lex_node.set_pos(x, y)
+            lex_node.connect_lex_parts()
         self.update_canvas()
         return self
 
