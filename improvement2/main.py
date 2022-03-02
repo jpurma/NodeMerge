@@ -6,7 +6,7 @@ from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivy.graphics import *
 
-from lexicon2 import test_lexicon, sentence
+from lexicon import test_lexicon, sentence
 
 import math
 

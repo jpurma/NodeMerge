@@ -15,6 +15,6 @@ program/parser state instead of being triggered by node activation. Converting t
 activation will make the network more complicated and difficult to follow, so these improvements will be added 
 gradually in improvement1..n -folders. To run latest and probably the most interesting improvements, run 
 
-    python3 improvement2/improvement2.py
+    python3 improvement2/main.py
 
 The parser here is a simplification of parser being developed as TreesAreMemory3 -plugin in https://github.com/jpurma/Kataja
