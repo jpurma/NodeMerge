@@ -174,7 +174,7 @@ class PosFeatureNode(FeatureNode):
     def connect_adjuncts(self):
         for feat in ctrl.features.values():
             if feat.name == 'a' and feat.values_match(self):
-                print('connect adj feats ', self, '+', feat)
+                #print('connect adj feats ', self, '+', feat)
                 feat.connect(self)
 
     def activate(self, n):
@@ -218,7 +218,7 @@ class NegFeatureNode(FeatureNode):
     def connect_positive(self):
         for feat in ctrl.features.values():
             if feat.name == self.name and not feat.sign and feat is not self and ((not self.values) or feat.values_match(self)):
-               print('connect feats ', self, '+', feat)
+               #print('connect feats ', self, '+', feat)
                feat.connect(self)
 
     def reset(self):

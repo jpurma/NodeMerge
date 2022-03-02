@@ -12,7 +12,7 @@ WIDTH = 1600
 HEIGHT = 1024
 LEXICON_PATH = 'lexicon.txt'
 SENTENCES_PATH = 'sentences.txt'
-SHOW_FULL_LEXICON = True
+SHOW_FULL_LEXICON = False
 
 
 class Network(Widget):
@@ -46,6 +46,17 @@ class Network(Widget):
         self.add_widget(self.next_sen_button)
         self.next_sen_button.on_press = self.next_sentence
 
+    def clear_grammar(self):
+        self.nodes = {}
+        self.edges = {}
+        self.lexicon = {}
+        self.features = {}
+        self.categories = []
+        self.merge_right = None
+        self.merge_left = None
+        self.merge_pair = None
+        self.merge_ok = None
+
     def update_canvas(self, *args):
         self.canvas.clear()
         self.clear_widgets()
@@ -59,9 +70,10 @@ class Network(Widget):
         self.add_widget(self.next_sen_button)
         self.add_widget(self.ongoing_sentence_label)
 
-    def read_lexicon(self, lexicon_file, append=False):
+    def read_lexicon(self, lexicon_file, append=False, only_these=None):
         if not append:
             self.lexicon.clear()
+        new_lexicon = {}
         with open(lexicon_file) as lines:
             for line in lines:
                 line = line.strip()
@@ -69,6 +81,8 @@ class Network(Widget):
                     continue
                 word, feats = line.split('::', 1)
                 word = word.strip()
+                if only_these and word not in only_these:
+                    continue
                 word_parts = feats.split(',')
                 first = True
                 lex_parts = []
@@ -87,8 +101,19 @@ class Network(Widget):
                             pos_feats.append(self.add(PosFeatureNode, feat))
                     lex_node = self.add(LexicalNode, word, cats, neg_feats + pos_feats, lex_parts)
                     lex_parts.append(lex_node)
-                    self.lexicon[word] = lex_node
+                    new_lexicon[word] = lex_node
                     first = False
+        if only_these:
+            self.lexicon.clear()
+            for word in only_these:
+                lex_node = new_lexicon[word]
+                self.lexicon[word] = lex_node
+                if lex_node.lex_parts:
+                    for part in lex_node.lex_parts:
+                        self.lexicon[part.id] = part
+
+        else:
+            self.lexicon = new_lexicon
 
     def find_by_signal(self, signal):
         for lex_item in reversed(self.lexicon.values()):
@@ -158,13 +183,18 @@ class Network(Widget):
         return node
 
     def parse(self, sentence):
-        self.words = WordPartList(sentence.split(), self.lexicon)
         if not SHOW_FULL_LEXICON:
-            self.redraw_with_limited_lexicon_nodes()
+            self.clear_grammar()
+            self.read_lexicon(LEXICON_PATH, only_these=sentence.split())
+            self.draw_grammar()
+        elif not self.lexicon:
+            self.read_lexicon(LEXICON_PATH)
+            self.draw_grammar()
+        self.words = WordPartList(sentence.split(), self.lexicon)
         self.words.pick_first()
         self.update_sentence()
 
-    def build(self):
+    def draw_grammar(self):
         row = 1
         row_height = HEIGHT / 5
         self.merge_right = self.add(RightMergeNode, 'M(A->B)')  # A→B
@@ -176,9 +206,7 @@ class Network(Widget):
         self.merge_ok = self.add(MergeOkNode, 'OK')
         self.merge_ok.set_pos(100, HEIGHT / 2)
 
-        row += 1
-        self.read_lexicon(LEXICON_PATH)
-        row += 1
+        row += 2
         for n, cat_node in enumerate(self.categories):
             cat_node.set_pos(WIDTH / (len(self.categories) + 1) * (n + 1), row * row_height)
         self.merge_right.connect(self.merge_ok)
@@ -211,10 +239,10 @@ class Network(Widget):
             lex_node.set_pos(x, y)
             lex_node.connect_lex_parts()
         self.update_canvas()
+
+    def build(self):
         self.sentences = [row.strip() for row in open(SENTENCES_PATH).readlines() if row.strip() and not row.strip().startswith(
             '#')]
-        print(self.sentences)
-        print(self.lexicon)
         self.parse(self.sentences[self.current_sentence_index])
         return self
 
