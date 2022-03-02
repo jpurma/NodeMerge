@@ -6,11 +6,13 @@ from kivy.uix.widget import Widget
 from nodes import *
 from word_parts import WordPart, WordPartList
 
-from lexicon import test_lexicon, sentence
 
 N_SIZE = 3
 WIDTH = 1600
 HEIGHT = 1024
+LEXICON_PATH = 'lexicon.txt'
+SENTENCES_PATH = 'sentences.txt'
+SHOW_FULL_LEXICON = True
 
 
 class Network(Widget):
@@ -22,16 +24,27 @@ class Network(Widget):
         self.lexicon = {}
         self.features = {}
         self.categories = []
+        self.sentences = []
+        self.current_sentence_index = 0
         self.merge_right = None
         self.merge_left = None
         self.merge_pair = None
         self.merge_ok = None
         self.words = None
-        self.next_button = Button(text='Next', font_size=14)
-        self.next_button.x = 20
-        self.next_button.y = 20
+        self.ongoing_sentence = ""
+        self.ongoing_sentence_label = Label(text="")
+        self.ongoing_sentence_label.x = WIDTH / 2
+        self.ongoing_sentence_label.y = 100
+        self.next_button = Button(text='Next step', font_size=14)
+        self.next_button.x = 120
+        self.next_button.y = 10
         self.add_widget(self.next_button)
         self.next_button.on_press = self.next_word
+        self.next_sen_button = Button(text='Next sen', font_size=14)
+        self.next_sen_button.x = 10
+        self.next_sen_button.y = 10
+        self.add_widget(self.next_sen_button)
+        self.next_sen_button.on_press = self.next_sentence
 
     def update_canvas(self, *args):
         self.canvas.clear()
@@ -43,36 +56,39 @@ class Network(Widget):
         for node in self.nodes.values():
             node.add_label()
         self.add_widget(self.next_button)
+        self.add_widget(self.next_sen_button)
+        self.add_widget(self.ongoing_sentence_label)
 
     def read_lexicon(self, lexicon_file, append=False):
         if not append:
             self.lexicon.clear()
-        for line in lexicon_file:
-            line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            word, feats = line.split('::', 1)
-            word = word.strip()
-            word_parts = feats.split(',')
-            first = True
-            lex_parts = []
-            for feats in word_parts:
-                if not first:
-                    word = f'({word})'
-                cats = []
-                neg_feats = []
-                pos_feats = []
-                for feat in feats.strip().split():
-                    if feat.startswith('cat:'):
-                        cats.append(self.add(CategoryNode, feat))
-                    elif feat[0] in NegFeatureNode.signs:
-                        neg_feats.append(self.add(NegFeatureNode, feat))
-                    else:
-                        pos_feats.append(self.add(PosFeatureNode, feat))
-                lex_node = self.add(LexicalNode, word, cats, neg_feats + pos_feats, lex_parts)
-                lex_parts.append(lex_node)
-                self.lexicon[word] = lex_node
-                first = False
+        with open(lexicon_file) as lines:
+            for line in lines:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                word, feats = line.split('::', 1)
+                word = word.strip()
+                word_parts = feats.split(',')
+                first = True
+                lex_parts = []
+                for feats in word_parts:
+                    if not first:
+                        word = f'({word})'
+                    cats = []
+                    neg_feats = []
+                    pos_feats = []
+                    for feat in feats.strip().split():
+                        if feat.startswith('cat:'):
+                            cats.append(self.add(CategoryNode, feat))
+                        elif feat[0] in NegFeatureNode.signs:
+                            neg_feats.append(self.add(NegFeatureNode, feat))
+                        else:
+                            pos_feats.append(self.add(PosFeatureNode, feat))
+                    lex_node = self.add(LexicalNode, word, cats, neg_feats + pos_feats, lex_parts)
+                    lex_parts.append(lex_node)
+                    self.lexicon[word] = lex_node
+                    first = False
 
     def find_by_signal(self, signal):
         for lex_item in reversed(self.lexicon.values()):
@@ -91,6 +107,13 @@ class Network(Widget):
         if first and second:
             LexicalNode.add_adjunction(WordPart(first, first_signal), WordPart(second, second_signal))
 
+    def update_sentence(self, text=""):
+        if not text:
+            text = f'{self.current_sentence_index + 1}/{len(self.sentences)}. ' + self.sentences[
+                self.current_sentence_index]
+        self.ongoing_sentence = text
+        self.ongoing_sentence_label.text = self.ongoing_sentence
+
     def reset(self):
         self.words.reset()
         for edge in list(self.edges.values()):
@@ -106,12 +129,25 @@ class Network(Widget):
     def next_word(self):
         if not self.words:
             return
-        if not self.words.pick_next():
+        if self.words.pick_next():
+            self.update_sentence(' '.join([wp.li.id for wp in self.words.word_parts]))
+        else:
             self.reset()
             self.words.pick_first()
+            self.update_sentence()
+
         self.clear_activations()
         if self.words.can_merge():
             self.activate()
+        self.update_canvas()
+
+    def next_sentence(self):
+        self.clear_activations()
+        self.reset()
+        self.current_sentence_index += 1
+        if self.current_sentence_index == len(self.sentences):
+            self.current_sentence_index = 0
+        self.parse(self.sentences[self.current_sentence_index])
         self.update_canvas()
 
     def add(self, node_class, label, *args, **kwargs):
@@ -123,7 +159,10 @@ class Network(Widget):
 
     def parse(self, sentence):
         self.words = WordPartList(sentence.split(), self.lexicon)
+        if not SHOW_FULL_LEXICON:
+            self.redraw_with_limited_lexicon_nodes()
         self.words.pick_first()
+        self.update_sentence()
 
     def build(self):
         row = 1
@@ -138,8 +177,7 @@ class Network(Widget):
         self.merge_ok.set_pos(100, HEIGHT / 2)
 
         row += 1
-        lexicon_file = StringIO(test_lexicon)
-        self.read_lexicon(lexicon_file)
+        self.read_lexicon(LEXICON_PATH)
         row += 1
         for n, cat_node in enumerate(self.categories):
             cat_node.set_pos(WIDTH / (len(self.categories) + 1) * (n + 1), row * row_height)
@@ -173,6 +211,11 @@ class Network(Widget):
             lex_node.set_pos(x, y)
             lex_node.connect_lex_parts()
         self.update_canvas()
+        self.sentences = [row.strip() for row in open(SENTENCES_PATH).readlines() if row.strip() and not row.strip().startswith(
+            '#')]
+        print(self.sentences)
+        print(self.lexicon)
+        self.parse(self.sentences[self.current_sentence_index])
         return self
 
     def clear_activations(self):
@@ -199,7 +242,6 @@ class NetworkApp(App):
         g = Network()
         ctrl.post_initialize(g)
         g.build()
-        g.parse(sentence)
         return g
 
 

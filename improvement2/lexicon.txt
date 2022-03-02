@@ -1,0 +1,32 @@
+Pekka :: N:nom3sg a:n
+Merja :: N:nom3sg a:n
+väite :: N:nom3sg a:n adjL:n, =rel:että
+teoria :: N:nom3sg a:n adjL:n
+se :: N:nom3sg a:n
+sopimus :: N:nom3sg adjL:D|a =T:a-inf
+
+Merjaa :: N:prt adjL:D <N:gen a:n
+Minttua :: N:prt a:n
+sitä :: N:prt a:D|n
+
+avaimen :: N:acc adjL:acc|gen =T:a-inf
+sopimuksen :: N:acc adjL:acc|gen =T:a-inf
+
+Merjalle :: N:lle
+
+hyvän :: a:acc|gen
+
+että :: rel:että adjL:n, =T
+jonka :: adjL:n =T, N:acc
+
+antaa :: T:a-inf =N:gen, v =N:acc|prt =N:lle =N:lla
+ihailla :: T:a-inf, v =N:prt =N:lla
+
+sanoi :: T:pst =N:nom3sg, =N:prt =rel:että a:t
+kumoutui :: =N:pass T:pst, =N:nom3sg
+hylättiin :: =N:pass T:pst, =N:nom3sg
+ihaili :: =N:nom3sg T:pst, =N:prt
+näki :: =N:nom3sg T:pst, =N:prt|acc
+peruuntui :: =N:pass T:pst, =N:nom3sg
+rakasti :: T:pst =N:nom3sg, =N:prt a:t
+teki :: T:pst =N:nom3sg, =N:acc|prt
