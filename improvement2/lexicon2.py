@@ -78,6 +78,15 @@ väite :: N:nom3sg a:n adjL:n, =rel:että
 teoria :: N:nom3sg a:n adjL:n
 kumoutui :: =N:pass T:pst, =N:nom3sg
 hylättiin :: =N:pass T:pst, =N:nom3sg
+Merja :: N:nom3sg a:n
+rakasti :: T:pst =N:nom3sg, =N:prt a:t
+Minttua :: N:prt a:n
+teki :: T:pst =N:nom3sg, =N:acc|prt
+hyvän :: a:acc|gen
+sopimuksen :: N:acc adjL:acc|gen =T:a-inf
+antaa :: T:a-inf =N:gen, v =N:acc|prt =N:lle =N:lla
+avaimen :: N:acc adjL:acc|gen =T:a-inf
+Merjalle :: N:lle
 """
 
 

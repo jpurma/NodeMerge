@@ -6,10 +6,15 @@ This project contains attempts to build syntactic operation Merge and simple par
 
 Requires python 3.7 (probably) or newer, up to python 3.9, as gui library used for drawing does not yet support python 3.10. 
 
-Install requirements () with `pip3 install -r requirements.txt`, then: 
+Install requirements with `pip3 install -r requirements.txt`, then: 
 
-    python3 main.py
+    python3 basic/main.py
 
-The first attempt has still lots of glue logic, operations and states that happen because of the program/parser state instead of being triggered by node activation. Converting these imperfections to node activation will make the network more complicated and difficult to follow, so I will probably be creating next versions as modified copies of the current main.py.
+This is the first attempt, which still lots of glue logic, operations and states that happen because of the 
+program/parser state instead of being triggered by node activation. Converting these imperfections to node 
+activation will make the network more complicated and difficult to follow, so these improvements will be added 
+gradually in improvement1..n -folders. To run latest and probably the most interesting improvements, run 
+
+    python3 improvement2/improvement2.py
 
 The parser here is a simplification of parser being developed as TreesAreMemory3 -plugin in https://github.com/jpurma/Kataja
