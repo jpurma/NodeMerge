@@ -183,6 +183,9 @@ class Node:
         self.activations = []
         self.active = False
 
+    def reset(self):
+        self.deactivate()
+
     def add_label(self):
         self.label_item = Label(text=self.id)
         self.label_item.x = self.x - 20
@@ -338,7 +341,7 @@ class NegFeatureNode(FeatureNode):
 
     def __init__(self, fstring):
         super().__init__(fstring)
-        self.banned_signals = []
+        self.banned_signals = set()
         self.sign = fstring[0]
         name_string = fstring[1:]
         if ':' in name_string:
@@ -356,12 +359,16 @@ class NegFeatureNode(FeatureNode):
                print('connect feats ', self, '+', feat)
                feat.connect(self)
 
+    def reset(self):
+        super(NegFeatureNode, self).reset()
+        self.banned_signals = set()
+
     def activate(self, n):
         if n not in self.activations:
             self.activations.append(n)
             lex_activations = []
             feat_activations = []
-            self.active = []
+            self.active = False
             for e in self.edges_in:
                 # use activation from active lexical item, not that of supporting feature
                 if isinstance(e.start, (LexicalNode, CategoryNode)) and e.activations:
@@ -374,15 +381,13 @@ class NegFeatureNode(FeatureNode):
                             feat_activations.append(signal)
             if lex_activations and feat_activations:
                 for head_signal in lex_activations:
-                    self.banned_signals.append(head_signal)
+                    self.banned_signals.add(head_signal)
                     for arg_signal in feat_activations:
-                        self.active.append((head_signal, arg_signal))
                         for out in self.edges_out:
                             out.activate((head_signal, arg_signal))
-            else:
-                self.active = []
+                self.active = True
         if not self.activations:
-            self.active = []
+            self.active = False
 
     def activated_at(self, signal):
         if not self.active:
@@ -705,6 +710,7 @@ class Network(Widget):
             if isinstance(edge, (MergeEdge, AdjunctEdge)):
                 del self.edges[edge.id]
         for node in self.nodes.values():
+            node.reset()
             if isinstance(node, LexicalNode):
                 node.head_edges.clear()
                 node.arg_edges.clear()
