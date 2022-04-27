@@ -1,0 +1,11 @@
+Nonnii, mitä pitikään tehdä? Oletetaan että yhteyksiä muodostetaan kaikkiin edeltäviin sanoihin virkkeessä jos piirteet
+sen mahdollistavat. Syntyy ihan liikaa yhteyksiä, ja tarvitaan tapa päättää niistä optimaalinen reitti jossa kaikki
+sanat lauseessa liittyvät toisiinsa mahdollisimman lyhyin yhteyksin. Lyhyin tarkoittaisi rakenteellista etäisyyttä, ei
+pienintä sanaindeksien erotusta. Optimaalisen reitin rakentamisen ongelma olisi ehkä syytä käsitellä erikseen muusta
+koodista, koska tuossa on mahdollista ja tarpeellista koetella monia erinäisiä keinoja ja pitää nykyistä noodirakennetta
+eheänä siinä samalla hidastaa ongelman käsittelyä. Tehdään erillinen hakemisto jossa kokeillaan näitä yhteyksien
+verkostojen sumplimisia.
+
+Tämän polunrakennuksen pitäisi toimia niin että kohdenoodi valmistelee reittejä levittämällä omaa aktivaatiotaan.
+
+

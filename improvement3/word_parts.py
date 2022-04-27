@@ -59,13 +59,12 @@ class WordPartList:
         print(f'''prev_items: {list(reversed(self.prev_items))} closest_item: {self.closest_item
               } current_item: {self.current_item}''')
 
-
     def pick_next(self):
         if not self.current_item:
             return
         li = self.current_item.li
         i = li.lex_parts.index(li)
-        self.closest_item = self.current_item
+        #self.closest_item = self.current_item
         if i < len(li.lex_parts) - 1:
             self.current_item = WordPart(li.lex_parts[i + 1], self.current_item.signal + 1)
             self.word_parts.append(self.current_item)
@@ -82,11 +81,19 @@ class WordPartList:
         return self.prev_items and self.current_item
 
     def collect_previous_items(self):
-        """ Seuraava haaste on tunnistaa tilanne, jossa sanan sisäinen elementti on arg, jolloin se koko sana on arg.
+        if len(self.word_parts) < 2:
+            return []
+        current_parts = self.word_parts[-1].li.lex_parts or [self.word_parts[-1].li]
+        return [part for part in self.word_parts if part.li not in current_parts]
 
-        Oikeastaan tätä ei pitäisi luoda joka iteraatioaskelella uudestaan, tämän pitäisi perustua signaalien sammuttamiseen
-        silloin kun elementti on argumenttina.
-         """
+    def collect_previous_items_old(self):
+        """ Otetaankin kaikki jotta selvitään tilanteista joissa parempi ehdokas tiettyyn rooliin tulee myöhemmin,
+        kuten 'Pekka sanoi että ihailee Merja luontoa' -- järkeily miksi tarvitaan kaikki menee niin, että jos meillä
+        olisi tässä heuristiikkaa estämässä tiettyjä elementtejä niin sikäli kun se heuristiikka pohjautuu yhteyksiin
+        jotka on rakennettu, niin nämä rakennetut yhteydet saattavat olla vääriä hypoteeseja joten niihin ei voi
+        luottaa, eikä siten koko heuristiikan tulokseen. Se jättää kyllä mahdolliseksi sellaiset heuristiikat
+        jotka perustuvat vain sanojen ominaisuuksiin.
+        """
 
         def is_unsatisfied_blocker(b_part: WordPart):
             for e in b_part.li.edges_out:

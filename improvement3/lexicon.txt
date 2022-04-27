@@ -2,18 +2,18 @@ C :: =F
 
 Pekka :: N:nom3sg a:n
 Merja :: N:nom3sg a:n
-väite :: N:nom3sg a:n adjL:n, =rel:että
-teoria :: N:nom3sg a:n adjL:n
+väite :: N:nom3sg a:n -a:n, =rel:että
+teoria :: N:nom3sg a:n -a:n
 se :: N:nom3sg a:n
-sopimus :: N:nom3sg adjL:D|a =T:a-inf
+sopimus :: N:nom3sg -a:D|a =T:a-inf
 
-Merjaa :: N:prt adjL:D <N:gen a:n =rel:jo
+Merjaa :: N:prt -a:D <N:gen a:n =rel:jo
 Minttua :: N:prt a:n
 sitä :: N:prt a:D|n
 
 Pekan :: N:acc|gen
-avaimen :: N:acc adjL:acc|gen
-sopimuksen :: N:acc adjL:acc|gen
+avaimen :: N:acc -a:acc|gen
+sopimuksen :: N:acc -a:acc|gen
 
 kiihkeästi :: a:v
 
@@ -21,21 +21,21 @@ Merjalle :: N:lle
 
 hyvän :: a:acc|gen
 
-että :: adjL:n|että, =T
+että :: rel:että, =T
 jonka :: rel:jo =T, N:acc
 
 antaa :: T:a-inf =N:gen, v =N:acc|prt =N:lle =N:lla
 ihailla :: T:a-inf =N:gen, v =N:prt =N:lla
 
-ihailee :: T:prees =N:nom3sg, =N:prt adjL:v
-ihailen :: T:prees =N:nom1sg, =N:prt adjL:v
+ihailee :: T:prees =N:nom3sg, =N:prt -a:v
+ihailen :: T:prees =N:nom1sg, =N:prt -a:v
 
-sanoin :: T:pst =N:nom1sg, =N:prt adjL:v =rel:että N:nom1sg
-sanoi :: T:pst =N:nom3sg, =N:prt adjL:v =rel:että N:nom3sg
+sanoin :: T:pst =N:nom1sg, =N:prt -a:v =rel:että N:nom1sg
+sanoi :: T:pst =N:nom3sg, =N:prt -a:v =rel:että N:nom3sg
 kumoutui :: =N:nom3sg, T:pst
 hylättiin :: =N:pass T:pst, =N:nom3sg
 ihaili :: =N:nom3sg T:pst, =N:prt
 näki :: =N:nom3sg T:pst, =N:prt|acc
 peruuntui :: T:pst, =N:nom3sg
-rakasti :: T:pst =N:nom3sg, =N:prt adjL:v
+rakasti :: T:pst =N:nom3sg, =N:prt -a:v
 teki :: T:pst =N:nom3sg, =N:acc|prt

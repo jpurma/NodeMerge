@@ -192,6 +192,7 @@ class Node:
             for activation in self.activations:
                 Color(hue(activation), 0.8, 0.5, mode='hsv')
                 Line(circle=[self.x, self.y, r], width=2)
+
                 r += 3
 
     @staticmethod

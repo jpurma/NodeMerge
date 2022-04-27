@@ -24,8 +24,7 @@ class Network(Widget):
         self.categories = []
         self.sentences = []
         self.current_sentence_index = 0
-        self.merge_right = None
-        self.merge_left = None
+        self.merge = None
         self.merge_pair = None
         self.merge_ok = None
         self.words = None
@@ -50,8 +49,7 @@ class Network(Widget):
         self.lexicon = {}
         self.features = {}
         self.categories = []
-        self.merge_right = None
-        self.merge_left = None
+        self.merge = None
         self.merge_pair = None
         self.merge_ok = None
 
@@ -162,7 +160,7 @@ class Network(Widget):
         self.clear_activations()
         if self.words.can_merge():
             self.activate()
-        build_tree(self.words.word_parts)
+        #build_tree(self.words.word_parts)
         self.update_canvas()
 
     def next_sentence(self):
@@ -196,11 +194,9 @@ class Network(Widget):
     def draw_grammar(self):
         row = 1
         row_height = HEIGHT / 5
-        self.merge_right = self.add(RightMergeNode, 'M(A->B)')  # A→B
-        self.merge_right.set_pos(WIDTH / 2 - 256, row * row_height)
-        self.merge_left = self.add(LeftMergeNode, 'M(A<-B)')  # A←B
-        self.merge_left.set_pos(WIDTH / 2, row * row_height)
-        self.merge_pair = self.add(PairMergeNode, 'M(A<->B)')
+        self.merge = self.add(SymmetricMergeNode, 'M(A<?>B)')  # A→B
+        self.merge.set_pos(WIDTH / 2 - 256, row * row_height)
+        self.merge_pair = self.add(SymmetricPairMergeNode, 'M(A<->B)')
         self.merge_pair.set_pos(WIDTH / 2 + 256, row * row_height)
         self.merge_ok = self.add(MergeOkNode, 'OK')
         self.merge_ok.set_pos(100, HEIGHT / 2)
@@ -208,8 +204,7 @@ class Network(Widget):
         row += 2
         for n, cat_node in enumerate(self.categories):
             cat_node.set_pos(WIDTH / (len(self.categories) + 1) * (n + 1), row * row_height)
-        self.merge_right.connect(self.merge_ok)
-        self.merge_left.connect(self.merge_ok)
+        self.merge.connect(self.merge_ok)
         self.merge_pair.connect(self.merge_ok)
         row += 1
         y_shift = -100
@@ -219,13 +214,12 @@ class Network(Widget):
             y_shift += 50
             if y_shift > 50:
                 y_shift = -100
-            if feat_node.sign:
-                feat_node.connect(self.merge_right)
-                feat_node.connect(self.merge_left)
+            if feat_node.sign == '=':
+                feat_node.connect(self.merge)
                 feat_node.connect_positive()
-            if feat_node.name == 'adjL':
+            elif feat_node.sign == '-':
                 feat_node.connect(self.merge_pair)
-                feat_node.connect_adjuncts()
+                feat_node.connect_positive()
             feat_node.set_pos(x, y)
         row += 1
         y_shift = 0
@@ -253,13 +247,13 @@ class Network(Widget):
 
     def activate(self):
         lefts = list(reversed(self.words.prev_items))
-        closest = self.words.closest_item
+        #closest = self.words.closest_item
         right = self.words.current_item
         right.li.activate(right.signal)
-        closest.li.activate(closest.signal)
+        #closest.li.activate(closest.signal)
         for left in reversed(lefts):
             left.li.activate(left.signal)
-        print(f'*** activate {lefts}+{closest}+{right}')
+        print(f'*** activate {lefts}+{right}')
         self.update_canvas()
 
 
