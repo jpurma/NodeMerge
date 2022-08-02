@@ -1,5 +1,10 @@
-sanoin että ihailee Merjaa
+sanoin että Pekka ihailee kiihkeästi Merjaa
+sanoin että Pekka kiihkeästi ihailee Merjaa
+sanoin että Pekka ihailee Merjaa kiihkeästi
 sanoin että kiihkeästi Pekka ihailee Merjaa
+sanoin kiihkeästi että Pekka ihailee Merjaa
+sopimus Pekan ihailla sitä Merjaa jonka Pekka näki peruuntui
+sanoin että ihailee Merjaa
 Pekka sanoi että ihailee Merjaa
 Pekka sanoi että Pekka ihailee Merjaa
 Pekka sanoi että ihailen Merjaa

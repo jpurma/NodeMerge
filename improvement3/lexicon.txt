@@ -27,10 +27,10 @@ jonka :: rel:jo =T, N:acc
 antaa :: T:a-inf =N:gen, v =N:acc|prt =N:lle =N:lla
 ihailla :: T:a-inf =N:gen, v =N:prt =N:lla
 
-ihailee :: T:prees =N:nom3sg, =N:prt -a:v
-ihailen :: T:prees =N:nom1sg, =N:prt -a:v
+ihailee :: T:prees =N:nom3sg -a:v, =N:prt
+ihailen :: T:prees =N:nom1sg -a:v, =N:prt
 
-sanoin :: T:pst =N:nom1sg, =N:prt -a:v =rel:että N:nom1sg
+sanoin :: T:pst =N:nom1sg -a:v, =N:prt =rel:että N:nom1sg
 sanoi :: T:pst =N:nom3sg, =N:prt -a:v =rel:että N:nom3sg
 kumoutui :: =N:nom3sg, T:pst
 hylättiin :: =N:pass T:pst, =N:nom3sg

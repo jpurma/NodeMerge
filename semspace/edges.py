@@ -42,23 +42,17 @@ class Edge:
 
     def activate(self, signal):
         if not signal or signal.strength <= 0:
-            #print('signal too weak')
             return
-        existing = self.get_signal(signal)
         if len(signal.parts) > 1:
             # seeker signal
-            if (not existing) or signal.strength > existing.strength:
+            if (not (existing := self.get_signal(signal))) or signal.strength > existing.strength:
                 # weaken also seeker signals to avoid them looping infinitely
                 weakened_signal = signal.copy() #.weaken(self.loss / 2)
                 if weakened_signal:
                     self.activations[signal.key] = weakened_signal
                     self.end.activate(weakened_signal)
-                #else:
-                #    print('signal too weak')
-            #else:
-            #    print('already visited by ', existing)
         else:
-            # outbound activation, preparing for strongest route back to initial node
+            # outbound activation, preparing the strongest route back to initial node
             end_signal = self.end.get_signal(signal)
             my_activation = self.get_signal(signal)
             if signal.strength > 0 and \
@@ -70,14 +64,6 @@ class Edge:
                     if weakened_signal:
                         self.set_signal(weakened_signal)
                         self.end.activate(weakened_signal)
-
-    # aktivoidaan (a, 1.0)
-    # aktivoidaan (a->b, 0.9)
-    # aktivoidaan (b, 0.9)
-    # aktivoidaan (b->a, 0.9)
-    # a --> b
-    # a <-- b
-
 
     def reset(self):
         self.activations = {}

@@ -7,13 +7,13 @@ class WordPart:
         self.signal = signal
 
     def __str__(self):
-        return f'({self.li.id}, {self.signal})'
+        return f'{self.li.id}-{self.signal}'
 
     def __repr__(self):
         return str(self)
 
     def __eq__(self, other):
-        return self.li is other.li and self.signal == other.signal
+        return isinstance(other, WordPart) and (self.li == other.li) and (self.signal == other.signal)
 
     def __hash__(self):
         return hash((self.li.id, self.signal))
@@ -76,6 +76,10 @@ class WordPartList:
         self.prev_items = self.collect_previous_items() if self.current_item else []
         # self.print_state()
         return self.current_item
+
+    def is_last(self):
+        return self.current_item and (not self.words_left) and self.current_item.li.lex_parts[-1] is \
+               self.current_item.li
 
     def can_merge(self):
         return self.prev_items and self.current_item
