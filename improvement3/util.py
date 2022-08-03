@@ -2,7 +2,7 @@ import math
 
 
 def hue(signal):
-    h = 0.7 * signal
+    h = 0.64 * signal
     return h - math.floor(h)
 
 

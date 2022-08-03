@@ -154,6 +154,9 @@ class FeatureNode(Node):
             if f in other.values:
                 return f
 
+    def sortable(self):
+        return self.name, ''.join(self.values), self.sign
+
 
 class PosFeatureNode(FeatureNode):
     color = [0, 1.0, 0, 0.5]

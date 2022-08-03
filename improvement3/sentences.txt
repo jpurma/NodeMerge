@@ -1,13 +1,14 @@
+Pekka sanoi kiihkeästi että ihailee Merjaa
 sanoin että Pekka ihailee kiihkeästi Merjaa
 sanoin että Pekka kiihkeästi ihailee Merjaa
 sanoin että Pekka ihailee Merjaa kiihkeästi
 sanoin että kiihkeästi Pekka ihailee Merjaa
 sanoin kiihkeästi että Pekka ihailee Merjaa
 sopimus Pekan ihailla sitä Merjaa jonka Pekka näki peruuntui
+sopimus Pekan ihailla sitä Merjaa kiihkeästi jonka Pekka näki peruuntui
 sanoin että ihailee Merjaa
 Pekka sanoi että ihailee Merjaa
 Pekka sanoi että Pekka ihailee Merjaa
-Pekka sanoi että ihailen Merjaa
 Pekka ihailee Merjaa
 ihailee Merjaa
 sopimus Pekan ihailla sitä Merjaa jonka Pekka näki peruuntui
@@ -18,5 +19,5 @@ Pekka sanoi että hylättiin se väite että teoria kumoutui
 hylättiin se väite että teoria kumoutui
 Pekka sanoi että se väite hylättiin että teoria kumoutui
 Pekka sanoi että Pekka sanoi että Merja rakasti Minttua
-myydäkö Pekka aikoo kaiken omaisuutensa
-aikooko Pekka myydä kaiken omaisuutensa
+# myydäkö Pekka aikoo kaiken omaisuutensa
+# aikooko Pekka myydä kaiken omaisuutensa

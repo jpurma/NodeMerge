@@ -29,6 +29,8 @@ class RouteSignal:
         self.relation = relation
         self.word = word
         self.signal = signal
+        if source and target:
+            assert not source.signals() & target.signals()
 
     def __contains__(self, item):
         if self.signal:
@@ -127,15 +129,18 @@ class RouteSignal:
         return f'[.{label} {source_tree} {target_tree}]'
 
     def coverage(self):
-        if self.relation == Relation.SIGNAL:
-            return 1
-        return self.target.coverage() + self.source.coverage()
-    
+        return len(self.signals())
+
     def signals(self):
         if self.relation == Relation.SIGNAL:
             return {self.signal}
         return self.target.signals() | self.source.signals()
-    
+
+    def signals_in_order(self):
+        if self.relation == Relation.SIGNAL:
+            return [self.signal]
+        return self.target.signals_in_order() + self.source.signals_in_order()
+
     def cost(self):
         if self.relation == Relation.SIGNAL:
             return 0
@@ -147,6 +152,9 @@ class RouteSignal:
         #print(target, source, min_edge, max_edge, cost)
         cost += (abs(self.source.find_head().signal - self.target.find_head().signal) - 1) / 10.0
         return cost + self.target.cost() + self.source.cost()
+
+    def compatible_with(self, other):
+        return not self.signals() & other.signals()
 
 
 class Network(Widget):
@@ -186,6 +194,8 @@ class Network(Widget):
                 self.next_word()
             elif keycode[1] == 'down':
                 self.next_sentence()
+            elif keycode[1] == 'up':
+                self.prev_sentence()
 
     def clear_grammar(self):
         self.nodes = {}
@@ -303,17 +313,26 @@ class Network(Widget):
 
         self.clear_activations()
         if self.words.can_merge():
-            self.activate()
+            self.activate_current_words()
         if self.words.is_last():
             self.compute_minimal_route()
         self.update_canvas()
 
     def next_sentence(self):
-        self.clear_activations()
-        self.reset()
         self.current_sentence_index += 1
         if self.current_sentence_index == len(self.sentences):
             self.current_sentence_index = 0
+        self._reset_sentence()
+
+    def prev_sentence(self):
+        self.current_sentence_index -= 1
+        if self.current_sentence_index < 0 :
+            self.current_sentence_index = len(self.sentences) - 1
+        self._reset_sentence()
+
+    def _reset_sentence(self):
+        self.clear_activations()
+        self.reset()
         self.parse(self.sentences[self.current_sentence_index])
         self.update_canvas()
 
@@ -353,7 +372,8 @@ class Network(Widget):
         self.merge_pair.connect(self.merge_ok)
         row += 1
         y_shift = -100
-        for n, feat_node in enumerate(self.features.values()):
+        sorted_features = sorted(self.features.values(), key=FeatureNode.sortable)
+        for n, feat_node in enumerate(sorted_features):
             x = WIDTH / (len(self.features) + 1) * (n + 1)
             y = row * row_height + y_shift
             y_shift += 50
@@ -390,7 +410,7 @@ class Network(Widget):
         for edge in self.edges.values():
             edge.activations = []
 
-    def activate(self):
+    def activate_current_words(self):
         lefts = list(reversed(self.words.prev_items))
         #closest = self.words.closest_item
         right = self.words.current_item
@@ -468,6 +488,7 @@ class Network(Widget):
                 rs = target_rs
             else:
                 rs = RouteSignal(source=source, target=target_rs, relation=relation)
+                assert not source.signals() & target_rs.signals()
             new_routes = []
             if rs not in wp.li.routes_up:
                 new_routes.append(rs)
@@ -486,22 +507,27 @@ class Network(Widget):
                 # jatkaa vain tapauksista joissa pää on 2.
                 for old_rs in wp.li.routes_up:
                     #print('checking old rs ', old_rs, ' vs new rs ', rs)
-                    if old_rs.relation == Relation.PART and rs.relation == Relation.HEAD:
+                    if old_rs.relation == Relation.PART and rs.relation == Relation.HEAD and rs.compatible_with(
+                            old_rs.source):
                         new_rs = RouteSignal(source=old_rs.source, target=rs, relation=old_rs.relation)
                         if new_rs not in wp.li.routes_up and new_rs not in new_routes:
                             print('case 1: adding queer part rs: ', new_rs, 'merging: ', old_rs, rs)
                             new_routes.append(new_rs)
-                    elif rs.relation == Relation.PART and old_rs.relation == Relation.HEAD:
+                    elif rs.relation == Relation.PART and old_rs.relation == Relation.HEAD and old_rs.compatible_with(
+                            rs.source):
                         new_rs = RouteSignal(source=rs.source, target=old_rs, relation=rs.relation)
                         if new_rs not in wp.li.routes_up and new_rs not in new_routes:
                             print('case 2: adding queer part rs: ', new_rs, 'merging: ', old_rs, rs)
                             new_routes.append(new_rs)
-                    if old_rs.relation == Relation.ADJUNCT and rs.relation == Relation.HEAD:
+                    if old_rs.relation == Relation.ADJUNCT and rs.relation == Relation.HEAD and rs.compatible_with(
+                            old_rs.source):
+                        print('making rs with source ', old_rs.source, ' and target ', rs)
                         new_rs = RouteSignal(source=old_rs.source, target=rs, relation=old_rs.relation)
                         if new_rs not in wp.li.routes_up and new_rs not in new_routes:
                             print('case 3. adding queer adj rs: ', new_rs, 'merging: ', old_rs, rs)
                             new_routes.append(new_rs)
-                    elif rs.relation == Relation.ADJUNCT and old_rs.relation == Relation.HEAD:
+                    elif rs.relation == Relation.ADJUNCT and old_rs.relation == Relation.HEAD and \
+                            old_rs.compatible_with(rs.source):
                         new_rs = RouteSignal(source=rs.source, target=old_rs, relation=rs.relation)
                         if new_rs not in wp.li.routes_up and new_rs not in new_routes:
                             print('case 4: adding queer adj rs: ', new_rs, 'merging: ', old_rs, rs)
@@ -532,6 +558,7 @@ class Network(Widget):
                 if edge.start == wp:
                     other_adjunct = edge.end
                     if not _is_part_of_route(other_adjunct.signal, rs):
+                        assert not {other_adjunct.signal} & rs.signals()
                         print('doing adjunct,', rs, ' walking up target ', other_adjunct.signal, ' edge: ', edge)
                         _walk_all_routes_up_from(Relation.ADJUNCT, source=rs, target_signal=other_adjunct.signal)
 
@@ -565,6 +592,8 @@ class Network(Widget):
                     print('    ', route.words())
                     print('    ', route.tree())
                     print(f'     coverage: {int(route.coverage() / len(signals) * 100)}% cost: {cost}')
+                else:
+                    print('  ', route.signals_in_order())
         sortable.sort()
         if sortable:
             route = sortable[0][1]
@@ -572,6 +601,7 @@ class Network(Widget):
             print('  ', route)
             print('    ', route.words())
             print('    ', route.tree())
+            print('    ', route.signals_in_order())
             print(f'     coverage: {int(route.coverage() / len(signals) * 100)}% cost: {route.cost()}')
 
 
