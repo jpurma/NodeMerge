@@ -29,8 +29,6 @@ class RouteSignal:
         self.relation = relation
         self.word = word
         self.signal = signal
-        if source and target:
-            assert not source.signals() & target.signals()
 
     def __contains__(self, item):
         if self.signal:
@@ -59,7 +57,7 @@ class RouteSignal:
         if self.relation == Relation.HEAD:
             return f'({self.source}->{self.target})'
         elif self.relation == Relation.PART:
-            return f'{self.source}.{self.target}'
+            return f'{self.target}.{self.source}'
         elif self.relation == Relation.ADJUNCT:
             return f'{self.source}=={self.target}'
 
@@ -131,6 +129,16 @@ class RouteSignal:
     def coverage(self):
         return len(self.signals())
 
+    def arg_count(self):
+        return len(self.arg_signals())
+
+    def arg_signals(self):
+        if self.relation == Relation.SIGNAL:
+            return set()
+        elif self.relation == Relation.HEAD:
+            return {str(self.source)} | self.source.arg_signals() | self.target.arg_signals()
+        return self.source.arg_signals() | self.target.arg_signals()
+
     def signals(self):
         if self.relation == Relation.SIGNAL:
             return {self.signal}
@@ -141,17 +149,24 @@ class RouteSignal:
             return [self.signal]
         return self.target.signals_in_order() + self.source.signals_in_order()
 
-    def cost(self):
+    def cost(self, part_map: dict):
+        """ part_map is mapping from signal indices to word indices, so that eg. if "sanoi", "sanoi'", "eilen" are
+        signals 1, 2, 3 then their word indices are 0, 0, 1. Word parts belonging to the same word have same word
+        index. This prevents multipart words from causing additional costs on movement. """
         if self.relation == Relation.SIGNAL:
             return 0
-        target = self.target.find_head().signal  # min(self.target.signals())
-        source = self.source.find_head().signal
-        min_edge = min(self.source.signals())
-        max_edge = max(self.source.signals())
-        cost = min(abs(target - source), abs(target - min_edge), abs(target - max_edge)) - 1
+        target = part_map[self.target.find_head().signal]  # min(self.target.signals())
+        source = part_map[self.source.find_head().signal]
+        min_edge = part_map[min(self.source.signals())]
+        max_edge = part_map[max(self.source.signals())]
+        cost = min(abs(target - source), abs(target - min_edge), abs(target - max_edge))
+        if cost > 0:
+            cost -= 1
         #print(target, source, min_edge, max_edge, cost)
-        cost += (abs(self.source.find_head().signal - self.target.find_head().signal) - 1) / 10.0
-        return cost + self.target.cost() + self.source.cost()
+        fine_cost = abs(self.target.find_head().signal - self.source.find_head().signal)
+        if fine_cost > 1:
+            cost += (fine_cost - 1) / 10
+        return cost + self.target.cost(part_map) + self.source.cost(part_map)
 
     def compatible_with(self, other):
         return not self.signals() & other.signals()
@@ -582,27 +597,31 @@ class Network(Widget):
 
         signals = {_wp.signal for _wp in self.words.word_parts}
         sortable = []
+        part_map = self.words.build_part_map()
         for word_part in self.words.word_parts:
             print(f'ooo routes up to highest heads from {word_part}:')
             for route in word_part.li.routes_up:
                 if route.coverage() == len(signals):
-                    cost = route.cost()
-                    sortable.append((cost, route))
+                    arg_count = route.arg_count()
+                    cost = route.cost(part_map)
+                    sortable.append((1.0/arg_count, cost, route))
                     print('  ', route)
                     print('    ', route.words())
                     print('    ', route.tree())
-                    print(f'     coverage: {int(route.coverage() / len(signals) * 100)}% cost: {cost}')
+                    print(f'     coverage: {int(route.coverage() / len(signals) * 100)}%, args: {arg_count}, '
+                          f'cost: {cost}')
                 else:
                     print('  ', route.signals_in_order())
         sortable.sort()
         if sortable:
-            route = sortable[0][1]
+            route = sortable[0][2]
             print('***** best parse: ')
             print('  ', route)
             print('    ', route.words())
             print('    ', route.tree())
             print('    ', route.signals_in_order())
-            print(f'     coverage: {int(route.coverage() / len(signals) * 100)}% cost: {route.cost()}')
+            print(f'     coverage: {int(route.coverage() / len(signals) * 100)}%, args: {route.arg_count()}, cost:'
+                  f' {route.cost(part_map)}')
 
 
 class NetworkApp(App):
@@ -615,3 +634,16 @@ class NetworkApp(App):
 
 if __name__ == '__main__':
     NetworkApp().run()
+
+
+# [.Merjaa Merjaa [.jonka jonka [.näki [.näki Pekka näki] [.näki' jonka' näki']]]]
+
+# missä mielessä se on paras yhdistelmä?
+
+# Lause on 'Merjaa jonka Pekka näki', tai "Merjaa jonka jonka' Pekka näki näki'". Tuossa on enemmän siirtymiä kuin
+# sellaisissa joissa 'jonka' ei asetu näki -argumentiksi. Yksi tapa olisi laskea kattavuus sen perusteella kuinka
+# monta  elementtiä on argumentteina. Siinä tulee todennäköisesti ongelmia siinä että joku sana voidaan siirtää
+# jonnekin absurdiin paikkaan argumentiksi suurin kustannuksin ja sellainen lause tulkitaan paremmaksi kuin sellainen
+# jossa ei ole siirretty. Myös pitää katsoa onko tuossa todella sattunut kallista siirtymää, nyt hinnaksi lasketaan
+# 2,4. Jotenkin pitäisi päätyä siihen että jos sana koostuu monesta elementistä, sen ohi hyppääminen ei silti ole
+# kuin yksi askel. Koitetaan aluksi korjata sitä.

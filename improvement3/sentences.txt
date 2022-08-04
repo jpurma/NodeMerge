@@ -1,4 +1,10 @@
-Pekka sanoi kiihkeästi että ihailee Merjaa
+Merja who he saw admiring him
+Pekka admires Merja who he saw admiring him
+Pekka admires Merja whom he saw
+Merjaa jonka Pekka näki
+Merjaa joka näki Pekan
+Pekka sanoi kiihkeästi että ihailee Merjaa joka näki Pekan
+Pekka sanoi kiihkeästi että ihailee Merjaa jonka hän näki
 sanoin että Pekka ihailee kiihkeästi Merjaa
 sanoin että Pekka kiihkeästi ihailee Merjaa
 sanoin että Pekka ihailee Merjaa kiihkeästi

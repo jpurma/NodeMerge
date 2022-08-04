@@ -90,58 +90,14 @@ class WordPartList:
         current_parts = self.word_parts[-1].li.lex_parts or [self.word_parts[-1].li]
         return [part for part in self.word_parts if part.li not in current_parts]
 
-    def collect_previous_items_old(self):
-        """ Otetaankin kaikki jotta selvitään tilanteista joissa parempi ehdokas tiettyyn rooliin tulee myöhemmin,
-        kuten 'Pekka sanoi että ihailee Merja luontoa' -- järkeily miksi tarvitaan kaikki menee niin, että jos meillä
-        olisi tässä heuristiikkaa estämässä tiettyjä elementtejä niin sikäli kun se heuristiikka pohjautuu yhteyksiin
-        jotka on rakennettu, niin nämä rakennetut yhteydet saattavat olla vääriä hypoteeseja joten niihin ei voi
-        luottaa, eikä siten koko heuristiikan tulokseen. Se jättää kyllä mahdolliseksi sellaiset heuristiikat
-        jotka perustuvat vain sanojen ominaisuuksiin.
-        """
-
-        def is_unsatisfied_blocker(b_part: WordPart):
-            for e in b_part.li.edges_out:
-                if isinstance(e.end, NegFeatureNode) and e.end.sign == '-' and not e.end.activated_at(b_part.signal):
-                    return True
-
-        def collect_adj_parts(adj_part, adj_parts):
-            adj_parts.add(adj_part)
-            for e in adj_part.li.adjunctions:
-                if e.end == adj_part:
-                    collect_adj_parts(e.start, adj_parts)
-
-        def collect_complex_parts(c_parts):
-            prev_li_parts = None
-            for c_part in set(c_parts):
-                if c_part.li.lex_parts is not prev_li_parts:
-                    c_parts |= set(self.get_lex_parts(c_part))
-                    prev_li_parts = c_part.li.lex_parts
-
-        part_stack = list(self.word_parts)
-        prev_items = []
-        current = part_stack.pop()
-        args = set()
-        inner_parts = current.li.lex_parts
-        related_parts = set()
-        while part_stack:
-            part = part_stack.pop()
-            if part not in related_parts:
-                related_parts = set()
-                collect_adj_parts(part, related_parts)
-                #collect_complex_parts(related_parts)
-                print(f'related parts for {part}: ', related_parts)
-                for related_part in related_parts:
-                    if [head_edge for head_edge in related_part.li.head_edges if head_edge.arg == related_part]:
-                        print(f'found one part being arg {related_part}, adding all related parts as args: ', related_parts)
-                        args |= related_parts
-            if part.li in inner_parts and False:
-                continue
-            else:
-                inner_parts = part.li.lex_parts
-                if part not in args or True:
-                    prev_items.append(part)
-            # if is_unsatisfied_blocker(part):
-            #    break
-
-        print(f'current {current}, known args: ', args)
-        return prev_items
+    def build_part_map(self):
+        prev = None
+        part_map = {}
+        count = 0
+        for word in self.word_parts:
+            if prev and prev.li not in word.li.lex_parts:
+                count += 1
+            part_map[word.signal] = count
+            prev = word
+        print('part map: ', part_map)
+        return part_map
