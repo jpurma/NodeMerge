@@ -1,5 +1,3 @@
-from nodes import NegFeatureNode
-
 
 class WordPart:
     def __init__(self, li, signal):

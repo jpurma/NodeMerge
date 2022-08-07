@@ -1,7 +1,7 @@
 C :: =F
 
-Pekka :: N:nom3sg a:n =rel:wh|jo
-Merja :: N:nom3sg a:n =rel:wh|jo
+Pekka :: N:nom3sg|acc a:n =rel:wh|jo
+Merja :: N:nom3sg|acc a:n =rel:wh|jo
 väite :: N:nom3sg a:n -a:n, =rel:että
 teoria :: N:nom3sg a:n -a:n
 se :: N:nom3sg a:n
@@ -24,17 +24,17 @@ Merjalle :: N:lle
 
 hyvän :: a:acc|gen
 
-että :: rel:että, =T
+että :: rel:että =T, N:nom3sg
 jonka :: rel:jo =T, N:acc
 joka :: rel:jo =T, N:nom3sg
 whom :: rel:wh =T, N:acc
-who :: rel:wh =T, N:nom3sg =T:inf
+who :: rel:wh =T, N:nom3sg|acc =T:inf
 
 antaa :: T:a-inf =N:gen, v =N:acc|prt =N:lle =N:lla
 ihailla :: T:a-inf =N:gen -a:v, =N:prt =N:lla
-admiring :: T:inf, =N:nom3sg|acc
+admiring :: T:inf, =N:acc
 
-admires :: T:prees =N:nom3sg -a:v, =N:nom3sg|acc
+admires :: T:prees =N:nom3sg -a:v, =N:acc
 ihailee :: T:prees =N:nom3sg -a:v, =N:prt
 ihailen :: T:prees =N:nom1sg -a:v, =N:prt
 
@@ -47,4 +47,4 @@ näki :: =N:nom3sg T:pst, =N:prt|acc
 peruuntui :: T:pst -a:v, =N:nom3sg
 rakasti :: T:pst =N:nom3sg, =N:prt -a:v
 teki :: T:pst =N:nom3sg, =N:acc|prt
-saw :: T:pst =N:nom3sg, =N:nom3sg|acc
+saw :: T:pst =N:nom3sg, =N:acc
