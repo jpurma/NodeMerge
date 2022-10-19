@@ -98,6 +98,7 @@ class LexicalNode(Node):
         self.head_edges = []
         self.adjunctions = []
         self.routes_up = []
+        self.route_starts = {}
         self.lex_parts = lex_parts
         for f_node in feats:
             self.connect(f_node)
@@ -126,6 +127,16 @@ class LexicalNode(Node):
         if edge not in other.edges_in:
             other.edges_in.append(edge)
 
+    def is_word_head(self):
+        return self.lex_parts and self.lex_parts[0] is self
+
+    def is_free_to_move(self):
+        for f_node in self.feats:
+            if f_node.name == 'moves':
+                print(f'{self} is free to move.')
+                return True
+        return False
+
     @staticmethod
     def add_adjunction(first, second):
         if (find_edge(first.li.adjunctions, start=second, end=first)
@@ -143,140 +154,6 @@ class LexicalNode(Node):
         edge = MergeEdge(arg, head)
         head.li.arg_edges.append(edge)
         arg.li.head_edges.append(edge)
-
-    # Route building -- this is kind of external logic that should be eventually implemented without relying to
-    # RouteSignals and their kind of procedural computation.
-
-    def continue_routes(self, rs, signal):
-        def _is_part_of_route(_signal, route):
-            if not route:
-                return False
-            return _signal in route
-
-        def get_previous_part():
-            if self.lex_parts and (part_index := self.lex_parts.index(self)):
-                return self.lex_parts[part_index - 1]
-
-        if prev_li := get_previous_part():
-            if not _is_part_of_route(signal - 1, rs):
-                prev_li.walk_all_routes_up_from(Relation.PART, source=rs, target_signal=signal - 1)
-
-        for edge in self.adjunctions:
-            if edge.start.signal == signal:
-                other_adjunct = edge.end
-                if not _is_part_of_route(other_adjunct.signal, rs):
-                    assert not {other_adjunct.signal} & rs.signals()
-                    print('doing adjunct,', rs, ' walking up target ', other_adjunct.signal, ' edge: ', edge)
-                    other_adjunct.li.walk_all_routes_up_from(Relation.ADJUNCT, source=rs,
-                                                             target_signal=other_adjunct.signal)
-        for edge in self.head_edges:
-            head = edge.end
-            if not _is_part_of_route(head.signal, rs):
-                head.li.walk_all_routes_up_from(Relation.HEAD, source=rs, target_signal=head.signal)
-
-    def walk_all_routes_up_from(self, relation, source=None, target_signal=None):
-        # muistetaan se metafora että kulkiessaan reittiä ylös muurahaiset kirjoittavat noodiin mistä tulivat,
-        # tähänastisen reittinsä. Jos wp:lle kirjoitetaan monia pitkiä reittejä, se saattaa tarkoittaa että tämä on
-        # koko lauseen pääsana.
-
-        # Reitin pohjimmainen jäsen kertoo siis sen, mistä reitti sai alkunsa -- jostakin argumentista.
-        # Reitin viimeinen jäsen on se sana minne tämä reitti päädytään kirjoittamaan.
-        #
-        # Jos reitti jatkaa jo olemassaolevaa reittiä kyse on tilanteesta jossa esim. sanojen 1 ja 2 jälkeen
-        # reittiä ei voitu tehdä pitemmälle, mutta kun tuli sana 4 niin se mahdollisti uuden pitemmän reitin ja
-        # nyt se [1, 2] korvataan sillä uudella.
-        #
-        # Hm, ylläoleva ei oikein toimi ajatuksena. Kun reitti aina päättyy nykyiseen wp:hen, niin ei voi olla
-        # tällä wp:llä toista reittiä joka olisi sisältynyt uuteen reittiin: vanha: [...x, wp] ja uusi: [...x, y,
-        # wp]
-        #
-        # Taitaa olla että reitin jatkamiseen liittyvä vertailu tehtiin vain väärinpäin, unohtui tuo metafora
-        # joka piti muistaa. Reitti kun esitetään listana, jossa viimeinen elementti on tämä
-        # tämänhetkinen wp ja jos reittiä jatketaan, sitä pitäisi jatkaa listan alusta. Käännetäänpä vertailu.
-
-        # J: Jos olemme argumentissa A niin säilötäänkö tänne reitteihin reitit tästä eteenpäin vai reitit tänne?
-        # K: Reitit tänne.
-        # target on aina yksinkertainen signaali, source voi olla
-        # J: jos on kaksi instanssia samasta sanasta, niin miten erotetaan kumman reittejä jatketaan?
-
-        # siinä kohtaa kun li:lle lisätään uusi reitti olisi mahdollisuus vertailla onko uusi reitti yhteensopiva
-        # vanhojen kanssa ja luoda mahdolliset yhdistelmät.
-
-        target_rs = RouteSignal(relation=Relation.SIGNAL, li=self, signal=target_signal)
-        if relation == Relation.SIGNAL:
-            rs = target_rs
-        else:
-            rs = RouteSignal(source=source, target=target_rs, relation=relation)
-            assert not source.signals() & target_rs.signals()
-        new_routes = [rs]
-        if relation == Relation.ADJUNCT:
-            print('at adjunct ', rs, ' it has source: ', rs.source, ' and target: ', rs.target)
-            other_li = rs.source.find_head().li
-            if rs not in other_li.routes_up:
-                other_li.routes_up.append(rs)
-                print('sharing adjunct to source head: ', rs.source.find_head(), other_li.routes_up)
-        if source:
-            # jos on vaikka 4->3 ja ..2.3 niin pitäisi olla mahdollista yhdistää ne reitiksi 2.(4->3)
-            # samaten jos on 4->3 ja 2==3 niin pitäisi tulla myös (4->2==3)
-            # muut yhdistelmät ovat mielettömiä.
-            #
-            # Mutta sen jälkeen pitäisi voida nähdä (4->2==3) niin, että sen pää on 3 tai 2. Nyt bugittaa kun
-            # jatkaa vain tapauksista joissa pää on 2.
-            for old_rs in self.routes_up:
-                #print('checking old rs ', old_rs, ' vs new rs ', rs)
-                # Vanha tapaus: 2.3, uusi rs 4->3, haluttu tulema 2.(4->3)
-                if old_rs.relation == Relation.PART and rs.relation == Relation.HEAD and rs.compatible_with(
-                        old_rs.source):
-                    new_rs = RouteSignal(source=old_rs.source, target=rs, relation=Relation.PART)
-                    if new_rs not in new_routes:
-                        if new_rs not in self.routes_up:
-                            print(f'{target_signal}: case 1, old word part relation: combine existing {old_rs} '
-                                  f'={old_rs.source} and current {rs} creating {new_rs}, {new_rs.words()}')
-                        new_routes.append(new_rs)
-                # Vanha tapaus: 4->3, uusi 2.3, haluttu tulema 2.(4->3)
-                elif rs.relation == Relation.PART and old_rs.relation == Relation.HEAD and old_rs.compatible_with(
-                        rs.source):
-                    new_rs = RouteSignal(source=rs.source, target=old_rs, relation=Relation.PART)
-                    if new_rs not in new_routes:
-                        if new_rs not in self.routes_up:
-                            print(f'{target_signal}: case 2, new word part relation: combine existing {old_rs} '
-                                  f'={old_rs.source} and current {rs} creating {new_rs}, {new_rs.words()}')
-                        new_routes.append(new_rs)
-                # Vanha tapaus 2==3, uusi 4->3, haluttu tulema 4->2==3
-                if old_rs.relation == Relation.ADJUNCT and rs.relation == Relation.HEAD and rs.compatible_with(
-                        old_rs.source):
-                    new_rs = RouteSignal(source=old_rs.source, target=rs, relation=Relation.ADJUNCT)
-                    if new_rs not in new_routes:
-                        if new_rs not in self.routes_up:
-                            print(f'{target_signal}: case 3, old adjunct relation: combine existing {old_rs} '
-                                  f'={old_rs.source} and current {rs} creating {new_rs}, {new_rs.words()}')
-                        new_routes.append(new_rs)
-                # Vanha tapaus 4->3, uusi 2==3, haluttu tulema 4->2==3
-                elif rs.relation == Relation.ADJUNCT and old_rs.relation == Relation.HEAD and \
-                        old_rs.compatible_with(rs.source):
-                    new_rs = RouteSignal(source=rs.source, target=old_rs, relation=Relation.ADJUNCT)
-                    if new_rs not in new_routes:
-                        if new_rs not in self.routes_up:
-                            print(f'{target_signal}: case 4, new adjunct relation: combine existing {old_rs} '
-                                  f'={old_rs.source} and current {rs} creating {new_rs}, {new_rs.words()}')
-                        new_routes.append(new_rs)
-        real_new_routes = [route for route in new_routes if route not in self.routes_up]
-        if real_new_routes:
-            print(f'{target_signal}: adding routes')
-        for rs in real_new_routes:
-            print(f'{target_signal}: {rs}')
-        self.routes_up += real_new_routes
-        for rs in new_routes:
-            if rs.relation == Relation.ADJUNCT:
-                if target_signal == rs.source.find_head().signal:
-                    other_wp = rs.target.find_head()
-                else:
-                    other_wp = rs.source.find_head()
-                print('would do adjunct, this: ', target_signal, ', source head: ', rs.source.find_head().signal,
-                      ' target head: ', rs.target.find_head().signal)
-                print('continue routes ', rs, other_wp)
-                other_wp.li.continue_routes(rs, other_wp.signal)
-            self.continue_routes(rs, target_signal)
 
 
 class FeatureNode(Node):
@@ -518,4 +395,3 @@ class MergeOkNode(Node):
         if n not in self.activations:
             self.activations.append(n)
         self.active = bool(self.activations)
-

@@ -1,4 +1,4 @@
-C :: =F
+C :: =N =Q
 
 Pekka :: N:nom3sg|acc a:n =rel:wh|jo
 Merja :: N:nom3sg|acc a:n =rel:wh|jo
@@ -25,15 +25,18 @@ Merjalle :: N:lle
 hyvän :: a:acc|gen
 
 että :: rel:että =T, N:nom3sg
-jonka :: rel:jo =T, N:acc
-joka :: rel:jo =T, N:nom3sg
-whom :: rel:wh =T, N:acc
-who :: rel:wh =T, N:nom3sg|acc =T:inf
+jonka :: rel:jo =T, N:acc moves
+joka :: rel:jo =T, N:nom3sg moves
+whom :: rel:wh =T, N:acc moves
+who :: Q rel:wh =T, N:nom3sg|acc =Ting moves
 
 antaa :: T:a-inf =N:gen, v =N:acc|prt =N:lle =N:lla
 ihailla :: T:a-inf =N:gen -a:v, =N:prt =N:lla
-admiring :: T:inf, =N:acc
+admiring :: Ting, =N:acc
 
+admire :: v block, =N:acc
+
+does :: Q T:prees =DOES, DOES moves =N:nom3sg, =v
 admires :: T:prees =N:nom3sg -a:v, =N:acc
 ihailee :: T:prees =N:nom3sg -a:v, =N:prt
 ihailen :: T:prees =N:nom1sg -a:v, =N:prt

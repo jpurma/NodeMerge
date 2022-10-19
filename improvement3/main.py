@@ -175,12 +175,14 @@ class Network(Widget):
             self.activate_current_words()
         print(f'*** {self.words.current_item.signal}: {self.words.current_item.li.word} ***')
         self.words.current_item.li.routes_up = []
-        self.words.current_item.li.walk_all_routes_up_from(Relation.SIGNAL, target_signal=self.words.current_item.signal)
+        self.words.current_item.li.walk_all_routes_up_from(self.words.current_item.li.rs)
         for wp in self.words.word_parts[:-1]:
             print(f'*** Revisiting {wp.signal}: {wp.li.word} ***')
-            wp.li.walk_all_routes_up_from(Relation.SIGNAL, target_signal=wp.signal)
+            wp.li.walk_all_routes_up_from(wp.rs)
         if self.words.is_last():
-            self.compute_minimal_route()
+            self.pick_optimal_route()
+        else:
+            self.show_current_routes()
         self.update_canvas()
 
     def next_sentence(self):
@@ -286,44 +288,23 @@ class Network(Widget):
         print(f'*** activate {lefts}+{right}')
         self.update_canvas()
 
+    def show_current_routes(self):
+        for word_part in self.words.word_parts:
+            print(f'*** routes down from {word_part}:')
+            for route in word_part.li.routes_up:
+                print('  ', route, route.words(), route.tree(), list(route.head_chain()))
 
-
-    def compute_minimal_route(self):
-        """ mitenkäs etsitään täydellinen, mutta ekonomisin reitti jos tarjotut yhteydet ovat
-
-        1. sanoin <> 3
-        2. että -> 1
-        3. kiihkeästi <> 1, <> 5
-        4. Pekka -> 5
-        5. ihailee -> 2, <> 3
-        6. Merjaa -> 5, -> 1
-        
-        Jotenkin pitäisi olla selvä että 1<>3 on huonompi suhde kuin 3<>5. 2:ssa alkaa jotain joka keskeytyy jos 3 on
-        osa 1:tä. 
-        
-        Tiedän että paras reitti olisi 1<-2 3 4->5((<>3)->2)<-6
-        
-        Etäisyys elementin ja toisen elementin välillä on etäisyys elementin ja toisen elementin lähimmän sen 
-        hallitseman lapsen välillä. Eli jos on [.A A B] C  niin etäisyys A:n ja C:n välillä on 1, koska B on A:n 
-        hallitsema ja B:n ja C:n välinen etäisyys on 1.  
-        """
-
-
-            #print('routes at ', wp.li, ' : ', wp.li.routes_up)
-            #print('added route: ', rs)
-
-        #for word_part in self.words.word_parts:
-        #    print(f'*** {word_part.signal} ***')
-        #    word_part.li.routes_up = []
-        #    self.walk_all_routes_up_from(Relation.SIGNAL, target_signal=word_part.signal)
-
+    def pick_optimal_route(self):
         signals = {_wp.signal for _wp in self.words.word_parts}
         sortable = []
         part_map = self.words.build_part_map()
+        total_routes = 0
         for word_part in self.words.word_parts:
-            print(f'ooo routes up to highest heads from {word_part}:')
+            print(f'*** routes down from {word_part}:')
             for route in word_part.li.routes_up:
-                print('  ', route.signals_in_order())
+                print('  ', route.signals_in_order(), route.clumped_signals_in_order(part_map),
+                      list(route.head_chain()), 'missing: ', signals - route.signals())
+                total_routes += 1
                 if route.coverage() == len(signals):
                     arg_count = route.arg_count()
                     cost = route.cost(part_map)
@@ -333,6 +314,7 @@ class Network(Widget):
                     print('    ', route.tree())
                     print(f'     coverage: {int(route.coverage() / len(signals) * 100)}%, args: {arg_count}, '
                           f'cost: {cost}')
+
         sortable.sort()
         if sortable:
             route = sortable[0][2]
@@ -340,10 +322,10 @@ class Network(Widget):
             print('  ', route)
             print('    ', route.words())
             print('    ', route.tree())
-            print('    ', route.signals_in_order())
+            print('    ', route.signals_in_order(), route.clumped_signals_in_order(part_map))
             print(f'     coverage: {int(route.coverage() / len(signals) * 100)}%, args: {route.arg_count()}, cost:'
                   f' {route.cost(part_map)}')
-
+        print('total routes: ', total_routes)
 
 class NetworkApp(App):
     def build(self):

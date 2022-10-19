@@ -1,8 +1,12 @@
 
+from improvement3.route_signal import Relation, RouteSignal
+
+
 class WordPart:
     def __init__(self, li, signal):
         self.li = li
         self.signal = signal
+        self.rs = RouteSignal(relation=Relation.SIGNAL, li=li, signal=signal)
 
     def __str__(self):
         return f'{self.li.id}-{self.signal}'

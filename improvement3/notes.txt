@@ -9,3 +9,52 @@ verkostojen sumplimisia.
 Tämän polunrakennuksen pitäisi toimia niin että kohdenoodi valmistelee reittejä levittämällä omaa aktivaatiotaan.
 
 
+12.10. 2022
+Miten selvittää 'C who does Pekka admire'? Yksi mahdollisuus olisi sellainen jossa toteutetaan pääsanan
+ja argumentin epäsymmetrisyys, eli 'Pekka admire':a ei voi tulkita samoin kuin 'admire Pekka'. Englannissa ei voi,
+suomessa voisi. Jos nuo ottaa imperatiiveina, 'admire Pekka!' ja '*Pekka admire!', niin pitäisi olla ilmeisempää ettei
+kyse ole ainoastaan siitä että ekassa mennään paikalle jossa normaalisti on subjekti ja siksi tälläinen pelkkä-objekti
+-rakenne on rikkinäinen. Tapoja toteuttaa tuo olisi tietysti verbin monivaiheisuus, se että on "admire-admire'", joista
+jälkimmäinen ottaa sen objektiargumentin. Siinäkin on pulmana se, että jos otan nyt käyttöön säännön jossa sananosa ei
+saa hypätä toisen sananosan yli etsiessään argumenttia, tulen rajoittaneeksi liikaa. Jos olisi mahdollista sanoa että
+tämän sananosan yli ei saa mennä argumenttia etsiessä, tässä tapauksessa siis tuo ensimmäinen 'admire', niin se
+ratkaisisi sen että se ei estä liikaa... Tosin haluamme kuitenkin mennä sen yli jos argumentti löytyy kysymyssanasta,
+kuten tuossa 'Who does Pekka admire'. Siinä pitäisi vaan stipuloida että liikkuvien elementtien hakeminen ei välitä
+esteestä. Kysymyksissä huomaa outouden tuossa imperatiivirakenteessa. Siinä 'Who admire!?' ei ole lainkaan oikein, pitää
+ olla 'Admire who?'. Onko tuo yhä imperatiivi, "C<-admireI.admireI'<-who" vai saako se jotenkin C<-Q tuosta who:sta?
+ Olisiko jotain helpompia esimerkkejä joissa kysymyssanankin siirtyminen estyy? Ei... Kokeillaan sitten tuota 'block'
+ -piirrettä.
+
+ ...Tai mietitään vielä sen kaksisuuntaisuutta. Nyt tuo "admire+block.admire'" toimisi niinpäin, että admire' ei voi
+ etsiä itselleen argumenttia vasemmalta, mutta englanniksi yhtä oleellista on se, että subjekti ei voi olla verbin
+ jälkeen, pitäisi olla tukittu myös siihen suuntaan. Vähän kömpelö, mutta toimiva tapa olisi laittaa "admire
+ .admire'+block.admire''", eli keskimmäinen elementti estää molempiin suuntiin. Tulisiko siitä sitten jotain joka
+ pitäisi laittaa kaikille englannin verbeille? Kuulostaa työläältä. Toinen tapa jota olen harrastanut on ilmaista
+ argumentin tarve toisella välimerkillä joka tulkitaan vaatimaan välitöntä naapuruutta. Siinä on se pulma että
+ välittömän naapuruuden toteutuminen vaikkapa kolmipaikkaisella verbillä 'Pekka bought Merja a book' ei onnistu. 'A
+ book' on siellä missä sen halutaan olevan, mutta se ei ole bought'':n vieressä. Ellei sitten naapuruutta laske
+ rakenteen mukaan, niin että bought'<-Merja.bought'' löytää 'a book:n' vierestään, koska Merja on jo osa tuota
+ kokonaisuutta jonka viertä tarkkaillaan. Myös 'a book' itsessään vaatisi rakenteellista tulkintaa ennenkuin osataan
+ sanoa että sen vasen reuna 'a' on osa jotain joka kelpaa argumentiksi. Mutta onko kysymyslauseiden lisäksi muuta joka
+ rikkoo välittömän naapuruuden vaatimusta? Huomataan, että tämä olisi suunnattu välitön naapuruus: ei kelpaa että
+ välitön naapuri, mutta väärällä puolella.
+
+ Jos A etsii välitöntä naapuria B, niin kelpaako sellainen joka on A:ta hallitsevan rakenteen välitön
+ naapuri? Jos ajatellaan että on A.A'.A'' niin jos se etsii B:tä, niin "B A.A'.A''" ei kelpaisi koska A' ei hallitse
+ A:ta joka on B:n naapuri. Mutta tämä toimisi taas liikaa toiseen suuntaan. "A.A'.A'' B" olisi ok myös silloin kun A
+ etsii B:tä, koska A hallitsee A' ja A'':ta. Mutta onko se kuitenkin niin, että subjekti verbin jälkeen on vähemmän
+ väärin kuin objekti ennen verbiä? '?advises Pekka Merja' on melkein hyväksyttävä. Tai sitten on vain ohjelmoinnissa
+ oppinut hyväksymään sellaisen järjestyksen helpommin kuin mitä luonnollisille kielille sopisi. Näissä 'does Pekka
+ admire Merja', 'who does Pekka admire' ja 'Pekka does admire Merja' olisi kuitenkin hyväksyttävä, että Pekka voi heilua
+  kummallakin puolella 'does':a. Se onkin hyvä argumentti tämän rakenteellisen ja hallintaan perustuvan naapuruuden puolesta.
+
+Eli sääntö olisi että jos argumentti B etsii päätä A niin sopiva A on sellainen jonka hallitsema rakenne on B:n
+hallitseman rakenteen vieressä jommallakummalla puolella.
+
+
+
+
+
+
+
+

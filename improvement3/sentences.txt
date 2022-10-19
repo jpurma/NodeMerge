@@ -1,4 +1,11 @@
-Merja who he saw admiring him
+C who does Pekka admire
+C does Pekka admire Merja
+C who Pekka does admire
+C who admires Pekka
+C Merja who he saw admiring him
+C Merja who saw Pekka
+C Merja who saw
+C Merja who Pekka saw
 Pekka admires Merja who he saw admiring him
 Pekka admires Merja whom he saw
 Merjaa jonka Pekka näki
