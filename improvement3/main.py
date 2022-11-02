@@ -3,9 +3,8 @@ from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 from kivy.core.window import Window
 
-from improvement3.route_signal import Relation
 from nodes import *
-from word_parts import WordPart, WordPartList
+from word_parts import WordPart, WordPartList, collect_signals, tree
 
 N_SIZE = 3
 WIDTH = 1600
@@ -158,7 +157,7 @@ class Network(Widget):
                 node.head_edges.clear()
                 node.arg_edges.clear()
                 node.adjunctions.clear()
-                node.routes_up.clear()
+                node.routes_down.clear()
 
     def next_word(self):
         if not self.words:
@@ -173,12 +172,13 @@ class Network(Widget):
         self.clear_activations()
         if self.words.can_merge():
             self.activate_current_words()
-        print(f'*** {self.words.current_item.signal}: {self.words.current_item.li.word} ***')
-        self.words.current_item.li.routes_up = []
-        self.words.current_item.li.walk_all_routes_up_from(self.words.current_item.li.rs)
+        print(f'*** {self.words.current_item} ***')
+        self.words.current_item.li.routes_down = []
+        self.words.current_item.walk_all_routes_up({'ITEM': self.words.current_item}, self.words)
+        print(self.words.current_item.li.routes_down)
         for wp in self.words.word_parts[:-1]:
-            print(f'*** Revisiting {wp.signal}: {wp.li.word} ***')
-            wp.li.walk_all_routes_up_from(wp.rs)
+            print(f'*** Revisiting {wp} ***')
+            wp.walk_all_routes_up({'ITEM': wp}, self.words)
         if self.words.is_last():
             self.pick_optimal_route()
         else:
@@ -279,10 +279,8 @@ class Network(Widget):
 
     def activate_current_words(self):
         lefts = list(reversed(self.words.prev_items))
-        #closest = self.words.closest_item
         right = self.words.current_item
         right.li.activate(right.signal)
-        #closest.li.activate(closest.signal)
         for left in reversed(lefts):
             left.li.activate(left.signal)
         print(f'*** activate {lefts}+{right}')
@@ -291,40 +289,17 @@ class Network(Widget):
     def show_current_routes(self):
         for word_part in self.words.word_parts:
             print(f'*** routes down from {word_part}:')
-            for route in word_part.li.routes_up:
-                print('  ', route, route.words(), route.tree(), list(route.head_chain()))
+            for route in word_part.li.routes_down:
+                print(route)
 
     def pick_optimal_route(self):
-        signals = {_wp.signal for _wp in self.words.word_parts}
-        sortable = []
-        part_map = self.words.build_part_map()
         total_routes = 0
         for word_part in self.words.word_parts:
             print(f'*** routes down from {word_part}:')
-            for route in word_part.li.routes_up:
-                print('  ', route.signals_in_order(), route.clumped_signals_in_order(part_map),
-                      list(route.head_chain()), 'missing: ', signals - route.signals())
+            for route in word_part.li.routes_down:
                 total_routes += 1
-                if route.coverage() == len(signals):
-                    arg_count = route.arg_count()
-                    cost = route.cost(part_map)
-                    sortable.append((1.0/arg_count, cost, route))
-                    print('  ', route)
-                    print('    ', route.words())
-                    print('    ', route.tree())
-                    print(f'     coverage: {int(route.coverage() / len(signals) * 100)}%, args: {arg_count}, '
-                          f'cost: {cost}')
-
-        sortable.sort()
-        if sortable:
-            route = sortable[0][2]
-            print('***** best parse: ')
-            print('  ', route)
-            print('    ', route.words())
-            print('    ', route.tree())
-            print('    ', route.signals_in_order(), route.clumped_signals_in_order(part_map))
-            print(f'     coverage: {int(route.coverage() / len(signals) * 100)}%, args: {route.arg_count()}, cost:'
-                  f' {route.cost(part_map)}')
+                if len(collect_signals(route)) == len(self.words.word_parts):
+                    print(tree(route))
         print('total routes: ', total_routes)
 
 class NetworkApp(App):

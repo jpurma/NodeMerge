@@ -1,7 +1,6 @@
 from kivy.uix.label import Label
 from kivy.graphics import *
 
-from improvement3.route_signal import Relation, RouteSignal
 from util import hue, find_edge
 from edges import Edge, LexEdge, AdjunctEdge, MergeEdge
 from ctrl import ctrl
@@ -97,7 +96,7 @@ class LexicalNode(Node):
         self.arg_edges = []
         self.head_edges = []
         self.adjunctions = []
-        self.routes_up = []
+        self.routes_down = []
         self.route_starts = {}
         self.lex_parts = lex_parts
         for f_node in feats:
@@ -133,7 +132,6 @@ class LexicalNode(Node):
     def is_free_to_move(self):
         for f_node in self.feats:
             if f_node.name == 'moves':
-                print(f'{self} is free to move.')
                 return True
         return False
 

@@ -36,6 +36,7 @@ admiring :: Ting, =N:acc
 
 admire :: v block, =N:acc
 
+did :: Q T:pst =DOES, DOES moves =N:nom3sg, =T:pst
 does :: Q T:prees =DOES, DOES moves =N:nom3sg, =v
 admires :: T:prees =N:nom3sg -a:v, =N:acc
 ihailee :: T:prees =N:nom3sg -a:v, =N:prt
