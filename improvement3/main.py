@@ -1,3 +1,6 @@
+import json
+import socket
+
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.widget import Widget
@@ -12,6 +15,8 @@ HEIGHT = 1024
 LEXICON_PATH = 'lexicon.txt'
 SENTENCES_PATH = 'sentences.txt'
 SHOW_FULL_LEXICON = False
+
+IP, PORT = '127.0.0.1', 62236
 
 
 class Network(Widget):
@@ -32,6 +37,7 @@ class Network(Widget):
         self.ongoing_sentence_label = Label(text="")
         self.ongoing_sentence_label.x = WIDTH / 2
         self.ongoing_sentence_label.y = 100
+        self.kataja_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.next_button = Button(text='Next step', font_size=14)
         self.next_button.x = 120
         self.next_button.y = 10
@@ -44,6 +50,12 @@ class Network(Widget):
         self.next_sen_button.on_press = self.next_sentence
         keyboard = Window.request_keyboard(self.handle_keyup, self)
         keyboard.bind(on_key_up=self.handle_keyup)
+        Window.bind(on_request_close=self.on_request_close)
+
+    def on_request_close(self, *args):
+        if self.kataja_socket:
+            # Sockets should be closed on garbage collection, probably this is not necessary
+            self.kataja_socket.close()
 
     def handle_keyup(self, window, keycode):
         if keycode:
@@ -145,6 +157,16 @@ class Network(Widget):
                 self.current_sentence_index]
         self.ongoing_sentence = text
         self.ongoing_sentence_label.text = self.ongoing_sentence
+
+    def send(self, data):
+        if self.kataja_socket:
+            try:
+                self.kataja_socket = socket.create_connection((IP, PORT))
+                self.kataja_socket.send(str(data).encode('utf-8'))
+                self.kataja_socket.close()
+                return True
+            except ConnectionRefusedError:
+                self.kataja_socket = None
 
     def reset(self):
         self.words.reset()
@@ -294,14 +316,25 @@ class Network(Widget):
 
     def pick_optimal_route(self):
         total_routes = 0
+        good_routes = []
         for word_part in self.words.word_parts:
             print(f'*** routes down from {word_part}:')
             for route in word_part.li.routes_down:
                 total_routes += 1
                 print(print_route(route))
                 if len(collect_signals(route)) == len(self.words.word_parts):
-                    print(tree(route))
+                    good_route = tree(route)
+                    good_routes.append(good_route)
+                    good_routes.append("")
+                    print(good_route)
+
+        if good_routes:
+            if self.send(json.dumps(good_routes)):
+                print(f'sent {int(len(good_routes) / 2)} good routes to kataja')
+            else:
+                print(f'found {int(len(good_routes) / 2)} good routes')
         print('total routes: ', total_routes)
+
 
 class NetworkApp(App):
     def build(self):
