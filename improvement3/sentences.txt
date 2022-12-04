@@ -1,5 +1,12 @@
+Pekka joka osti Merjalle kukkia
+Pekka joka MerjalleF kukkiaF osti
+yksinkö Merja antaa kukan
+antaako Merja kukan yksin
+antaako Merja kukan
+antaako kukan Merja
+sad young Pekka mostly admires sad young Merja faintly
+sad young Pekka
 who he saw admiring him
-Pekka admires Merja
 Pekka admires Merja who he saw admiring him
 C who does Pekka admire
 C does Pekka admire Merja

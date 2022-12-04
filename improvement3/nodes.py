@@ -127,10 +127,13 @@ class LexicalNode(Node):
             other.edges_in.append(edge)
 
     def is_word_head(self):
-        return self.lex_parts and self.lex_parts[0] is self
+        return self.lex_parts[0] is self
 
     def is_free_to_move(self):
-        for f_node in self.feats:
+        if self.is_word_head():
+            return False
+        word_head = self.lex_parts[0]
+        for f_node in word_head.feats:
             if f_node.name == 'moves':
                 return True
         return False
@@ -142,7 +145,7 @@ class LexicalNode(Node):
             print('exists already')
             return
         edge = AdjunctEdge(first, second)
-        first.li.adjunctions.append(edge)
+        #first.li.adjunctions.append(edge)
         second.li.adjunctions.append(edge)
 
     @staticmethod
@@ -232,13 +235,18 @@ class NegFeatureNode(FeatureNode):
                             lex_activations.append(signal)
                 elif e.activations:
                     for signal in e.activations:
-                        if signal not in lex_activations:
+                        if signal not in lex_activations or self.sign == '-':
                             feat_activations.append(signal)
+                            print('feat activations at ', self, feat_activations)
             if lex_activations and feat_activations:
                 for head_signal in lex_activations:
                     for arg_signal in feat_activations:
-                        for out in self.edges_out:
-                            out.activate((head_signal, arg_signal))
+                        if head_signal != arg_signal:
+                            for out in self.edges_out:
+                                if self.sign == '-':
+                                    print('activating edge out from ', self, (head_signal, arg_signal),
+                                          'existing activations: ', out.activations)
+                                out.activate((head_signal, arg_signal))
                 self.active = True
         if not self.activations:
             self.active = False

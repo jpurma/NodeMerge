@@ -4,7 +4,7 @@ from kivy.uix.widget import Widget
 from kivy.core.window import Window
 
 from nodes import *
-from word_parts import WordPart, WordPartList, collect_signals, tree
+from word_parts import WordPart, WordPartList, collect_signals, tree, print_route
 
 N_SIZE = 3
 WIDTH = 1600
@@ -176,7 +176,7 @@ class Network(Widget):
         self.words.current_item.li.routes_down = []
         self.words.current_item.walk_all_routes_up({'ITEM': self.words.current_item}, self.words)
         print(self.words.current_item.li.routes_down)
-        for wp in self.words.word_parts[:-1]:
+        for wp in reversed(self.words.word_parts[:-1]):
             print(f'*** Revisiting {wp} ***')
             wp.walk_all_routes_up({'ITEM': wp}, self.words)
         if self.words.is_last():
@@ -298,6 +298,7 @@ class Network(Widget):
             print(f'*** routes down from {word_part}:')
             for route in word_part.li.routes_down:
                 total_routes += 1
+                print(print_route(route))
                 if len(collect_signals(route)) == len(self.words.word_parts):
                     print(tree(route))
         print('total routes: ', total_routes)

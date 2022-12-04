@@ -1,7 +1,8 @@
 C :: =N =Q
 
-Pekka :: N:nom3sg|acc a:n =rel:wh|jo
-Merja :: N:nom3sg|acc a:n =rel:wh|jo
+Pekka :: N:nom3sg|acc -a:n =rel:wh|jo
+# Merja :: N:nom3sg|acc -a:n =rel:wh|jo
+Merja :: N:nom3sg -a:n =rel:wh|jo
 väite :: N:nom3sg a:n -a:n, =rel:että
 teoria :: N:nom3sg a:n -a:n
 se :: N:nom3sg a:n
@@ -13,34 +14,49 @@ Merjaa :: N:prt -a:D <N:gen a:n =rel:jo
 Minttua :: N:prt a:n
 sitä :: N:prt a:D|n
 him  :: N:acc
+kukkia :: N:prt
+kukkiaF :: F moves, N:prt
 
 Pekan :: N:acc|gen
 avaimen :: N:acc -a:acc|gen
 sopimuksen :: N:acc -a:acc|gen
+kukan :: N:acc -a:acc|gen
 
 kiihkeästi :: a:v
+faintly :: a:v
+mostly :: a:v
+yksin :: a:v
+
+sad :: a:n -a:n
+big :: a:n -a:n
+young :: a:n -a:n
 
 Merjalle :: N:lle
+MerjalleF :: F moves, N:lle
 
 hyvän :: a:acc|gen
 
 että :: rel:että =T, N:nom3sg
-jonka :: rel:jo =T, N:acc moves
-joka :: rel:jo =T, N:nom3sg moves
-whom :: rel:wh =T, N:acc moves
-who :: Q rel:wh =T, N:nom3sg|acc =Ting moves
+jonka :: rel:jo =T moves, N:acc
+joka :: rel:jo =T moves, N:nom3sg
+whom :: rel:wh =T moves, N:acc
+who :: Q rel:wh =T moves, N:nom3sg|acc =Ting
 
-antaa :: T:a-inf =N:gen, v =N:acc|prt =N:lle =N:lla
+antaa :: T:a-inf =N:gen|nom3sg, v =N:acc|prt =N:lle =N:lla -a:v
 ihailla :: T:a-inf =N:gen -a:v, =N:prt =N:lla
 admiring :: Ting, =N:acc
 
 admire :: v block, =N:acc
 
-did :: Q T:pst =DOES, DOES moves =N:nom3sg, =T:pst
-does :: Q T:prees =DOES, DOES moves =N:nom3sg, =v
-admires :: T:prees =N:nom3sg -a:v, =N:acc
+did :: Q T:pst =DOES moves, DOES =N:nom3sg, =T:pst
+does :: Q T:prees =DOES moves, DOES =N:nom3sg, =v
+admires :: T:prees =N:nom3sg -a:v, =N:acc -a:v
 ihailee :: T:prees =N:nom3sg -a:v, =N:prt
 ihailen :: T:prees =N:nom1sg -a:v, =N:prt
+
+nukkuuko :: ko moves =T, T:prees =N:nom3sg, v -a:v
+antaako :: ko moves =T, T:prees =N:nom3sg, v =N:acc|prt -a:v
+yksinkö :: ko moves =T, a:v
 
 sanoin :: T:pst =N:nom1sg -a:v, =N:prt =rel:että N:nom1sg
 sanoi :: T:pst =N:nom3sg -a:v, =N:prt =rel:että
@@ -52,3 +68,4 @@ peruuntui :: T:pst -a:v, =N:nom3sg
 rakasti :: T:pst =N:nom3sg, =N:prt -a:v
 teki :: T:pst =N:nom3sg, =N:acc|prt
 saw :: T:pst =N:nom3sg, =N:acc
+osti :: T:pst =N:nom3sg, v =N:acc|prt, =N:lle -a:v
