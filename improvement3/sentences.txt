@@ -1,21 +1,26 @@
-Pekka joka osti Merjalle kukkia
-Pekka joka MerjalleF kukkiaF osti
-yksinkö Merja antaa kukan
+Pekka ei antanut kukkiaF Merjalle
+eikö Pekka ollut antanut Merjalle kukkia
+eiF Pekka antanut Merjalle kukkia
+Pekka ei antanut Merjalle kukkia
+Pekka ei ollut antanut Merjalle kukkia
 antaako Merja kukan yksin
 antaako Merja kukan
 antaako kukan Merja
 sad young Pekka mostly admires sad young Merja faintly
+Pekka joka MerjalleF kukkiaF osti
+Pekka joka osti Merjalle kukkia
+yksinkö Merja antaa kukan
 sad young Pekka
 who he saw admiring him
 Pekka admires Merja who he saw admiring him
-C who does Pekka admire
-C does Pekka admire Merja
-C who Pekka does admire
-C who admires Pekka
-C Merja who he saw admiring him
-C Merja who saw Pekka
-C Merja who saw
-C Merja who Pekka saw
+who does Pekka admire
+does Pekka admire Merja
+who Pekka does admire
+who admires Pekka
+Merja who he saw admiring him
+Merja who saw Pekka
+Merja who saw
+Merja who Pekka saw
 Pekka admires Merja whom he saw
 Merjaa jonka Pekka näki
 Merjaa joka näki Pekan

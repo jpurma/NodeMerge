@@ -1,8 +1,6 @@
-C :: =N =Q
-
 Pekka :: N:nom3sg|acc -a:n =rel:wh|jo
-# Merja :: N:nom3sg|acc -a:n =rel:wh|jo
-Merja :: N:nom3sg -a:n =rel:wh|jo
+Merja :: N:nom3sg|acc -a:n =rel:wh|jo
+# Merja :: N:nom3sg -a:n =rel:wh|jo
 väite :: N:nom3sg a:n -a:n, =rel:että
 teoria :: N:nom3sg a:n -a:n
 se :: N:nom3sg a:n
@@ -15,7 +13,7 @@ Minttua :: N:prt a:n
 sitä :: N:prt a:D|n
 him  :: N:acc
 kukkia :: N:prt
-kukkiaF :: F moves, N:prt
+kukkiaF :: F moves =f, f N:prt
 
 Pekan :: N:acc|gen
 avaimen :: N:acc -a:acc|gen
@@ -32,13 +30,21 @@ big :: a:n -a:n
 young :: a:n -a:n
 
 Merjalle :: N:lle
-MerjalleF :: F moves, N:lle
+MerjalleF :: F =f moves, f N:lle
 
 hyvän :: a:acc|gen
 
+ei :: neg =N:nom3sg, =v:inf|infO
+eiF :: F moves =f, f neg =N:nom3sg, =v:inf|infO
+eikö :: ko moves =neg, neg =N:nom3sg, =v:inf|infO
+
+ollut :: v:infO =v:inf
+
+antanut :: v:inf =N:acc|prt, =N:lle -a:v
+
 että :: rel:että =T, N:nom3sg
 jonka :: rel:jo =T moves, N:acc
-joka :: rel:jo =T moves, N:nom3sg
+joka :: rel:jo =C moves, N:nom3sg
 whom :: rel:wh =T moves, N:acc
 who :: Q rel:wh =T moves, N:nom3sg|acc =Ting
 
@@ -68,4 +74,4 @@ peruuntui :: T:pst -a:v, =N:nom3sg
 rakasti :: T:pst =N:nom3sg, =N:prt -a:v
 teki :: T:pst =N:nom3sg, =N:acc|prt
 saw :: T:pst =N:nom3sg, =N:acc
-osti :: T:pst =N:nom3sg, v =N:acc|prt, =N:lle -a:v
+osti :: C T:pst =N:nom3sg, v =N:acc|prt, =N:lle -a:v

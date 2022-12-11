@@ -305,7 +305,7 @@ class Network(Widget):
         right.li.activate(right.signal)
         for left in reversed(lefts):
             left.li.activate(left.signal)
-        print(f'*** activate {lefts}+{right}')
+        print(f'    Main: *** activate {lefts}+{right}')
         self.update_canvas()
 
     def show_current_routes(self):
@@ -317,10 +317,11 @@ class Network(Widget):
     def pick_optimal_route(self):
         total_routes = 0
         good_routes = []
-        for word_part in self.words.word_parts:
+        for word_part in reversed(self.words.word_parts):
             print(f'*** routes down from {word_part}:')
             for route in word_part.li.routes_down:
                 total_routes += 1
+                print(route)
                 print(print_route(route))
                 if len(collect_signals(route)) == len(self.words.word_parts):
                     good_route = tree(route)
@@ -330,7 +331,8 @@ class Network(Widget):
 
         if good_routes:
             if self.send(json.dumps(good_routes)):
-                print(f'sent {int(len(good_routes) / 2)} good routes to kataja')
+                print(f'sent {int(len(good_routes) / 2)} good routes to kataja ('
+                      f'{len(json.dumps(list(reversed(good_routes))))})')
             else:
                 print(f'found {int(len(good_routes) / 2)} good routes')
         print('total routes: ', total_routes)

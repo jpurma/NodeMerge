@@ -36,30 +36,40 @@ def print_route(route):
     this = route['ITEM']
     if 'ADJUNCT' in route:
         if route['ITEM'].signal < route['ADJUNCT']['ITEM'].signal:
-            this = f"{this}+{print_route(route['ADJUNCT'])}"
+            this = f"({this}+{print_route(route['ADJUNCT'])})"
         else:
-            this = f"{print_route(route['ADJUNCT'])}+{this}"
+            this = f"({print_route(route['ADJUNCT'])}+{this})"
     if 'ARG' in route:
         if route['ITEM'].signal < route['ARG']['ITEM'].signal and not route['ITEM'].li.is_free_to_move():
-            this = f"{this}<-{print_route(route['ARG'])}"
+            this = f"({this}<-{print_route(route['ARG'])})"
         else:
-            this = f"{print_route(route['ARG'])}->{this}"
+            this = f"({print_route(route['ARG'])}->{this})"
     if 'PART' in route:
         this = f"{this}.{print_route(route['PART'])}"
     return this
 
 
 def tree(route):
+    def _build_label(adjunct):
+        item = adjunct['ITEM']
+        more_adjuncts = adjunct.get('ADJUNCT', None)
+        a_label = str(item)
+        if more_adjuncts:
+            if item.signal < more_adjuncts['ITEM'].signal:
+                return f'{a_label}+{_build_label(more_adjuncts)}'
+            return f'{_build_label(more_adjuncts)}+{a_label}'
+        return a_label
+
     label = str(route['ITEM'])
     this = label
     if 'PART' in route:
         this = f"[.{label} {route['ITEM']} {tree(route['PART'])}]"
     if 'ADJUNCT' in route:
         if route['ITEM'].signal < route['ADJUNCT']['ITEM'].signal:
-            label = f"{label}+{route['ADJUNCT']['ITEM']}"
+            label = f"{label}+{_build_label(route['ADJUNCT'])}"
             this = f"[.{label} {this} {tree(route['ADJUNCT'])}]"
         else:
-            label = f"{route['ADJUNCT']['ITEM']}+{label}"
+            label = f"{_build_label(route['ADJUNCT'])}+{label}"
             this = f"[.{label} {tree(route['ADJUNCT'])} {this}]"
     if 'ARG' in route:
         if route['ITEM'].signal < route['ARG']['ITEM'].signal and not route['ITEM'].li.is_free_to_move():
@@ -92,16 +102,11 @@ def routes_overlap(route, other_route, route_signals=None):
     if (('ARG' in route and 'ARG' in other_route) or
        ('PART' in route and 'PART' in other_route) or
        ('ADJUNCT' in route and 'ADJUNCT' in other_route)):
+        print('       routes overlap: two elements fill the same role')
         return True
     if not route_signals:
         route_signals = collect_arg_signals(route)
     return route_signals & collect_arg_signals(other_route)
-
-def contains_dict(d, list_of_dicts):
-    is_it = any(x == d for x in list_of_dicts)
-    print(d in list_of_dicts, is_it)
-    assert (d in list_of_dicts) == is_it
-    return d in list_of_dicts
 
 
 class WordPart:
@@ -136,21 +141,37 @@ class WordPart:
         signals = collect_signals(route)
         if signals & other_signals:
             return False
-        return min(signals) == max(other_signals) + 1 or max(signals) == min(other_signals) - 1
+        if self.li.is_mover_head():
+            signals |= self.lex_part_signals() - other_signals
+        if other.li.is_mover_head():
+            other_signals |= other.lex_part_signals() - signals
+        print('    are neighbors: ', self, other, signals, other_signals)
+        #return True
+        for signal in list(signals):
+            if signal > 1:
+                signals.add(signal - 1)
+            signals.add(signal + 1)
+        print('      extended signals: ', signals, '  overlap: ', signals & other_signals)
+        return signals & other_signals
 
     def is_free_to_move_in_route(self, route):
         #print(f'is "{self}" free to move in route {route}?')
         pass
 
+    def lex_part_signals(self):
+        lex_part_index = self.li.lex_parts.index(self.li)
+        return set(range(self.signal - lex_part_index, self.signal - lex_part_index + len(self.li.lex_parts)))
+
     # {'ITEM': admires-2, 'ARG': {'ITEM': Pekka-1}, 'PART': {'ITEM': admires'-3, 'ARG': {'ITEM': Merja-4}}}
     def add_new_route(self, route, other_route, wp_list):
         route_signals = collect_arg_signals(route)
         if routes_overlap(route, other_route, route_signals):
+            #print('  routes overlap: ', route, other_route)
             return
-        print('add_new_route ', route, other_route, ' => ', route | other_route)
+        print('  add_new_route ', route, other_route, ' => ', route | other_route)
         new_combination = route | other_route
         if new_combination not in self.li.routes_down:
-            print(f'added route to {self}: {new_combination}')
+            print(f'    added route to {self}: {new_combination}')
             self.li.routes_down.append(new_combination)
         self.walk_all_routes_up(new_combination, wp_list)
 
@@ -168,16 +189,8 @@ class WordPart:
         # Selkeyden vuoksi yritetään pitää nyt erillään reitin luominen ja reittien yhdistäminen.
         print('walking all routes up from ', self, ' with route ', route)
 
-        lex_part_index = self.li.lex_parts.index(self.li)
         if route not in self.li.routes_down:
             self.li.routes_down.append(route)
-        if lex_part_index:
-            wp = wp_list.word_parts[self.signal - 2]  # this is previous word part as signals start at 1
-            this_moves = self.li.is_free_to_move()
-            other_moves = wp.li.is_free_to_move()
-            if (this_moves and other_moves) or not (this_moves or other_moves) or True:
-                for other_route in wp.li.routes_down or [{}]:
-                    wp.add_new_route({'ITEM': wp, Relation.PART.name: route}, other_route, wp_list)
 
         for edge in self.li.adjunctions:
             if edge.start == self:
@@ -191,9 +204,18 @@ class WordPart:
             # pitäisi todeta että edge.head:n hallitsema alue ulottuu self:n hallitseman alueen naapuriksi.
             # route pitäisi ymmärtää laajemmin, niin että se kattaa myös yhdistelmät
             for other_route in edge.head.li.routes_down or [{}]:
-                if self.are_neighbors(edge.head, route, other_route):
-                    if not includes(route, edge.head) and route['ITEM'].signal not in collect_arg_signals(route):
+                if not includes(route, edge.head) and route['ITEM'].signal not in collect_arg_signals(route):
+                    if self.are_neighbors(edge.head, route, other_route):
                         edge.head.add_new_route({'ITEM': edge.head, Relation.ARG.name: route}, other_route, wp_list)
+
+        is_later_part = self.li.lex_parts.index(self.li)
+        if is_later_part:
+            wp = wp_list.word_parts[self.signal - 2]  # this is previous word part as signals start at 1
+            this_moves = self.li.is_free_to_move()
+            other_moves = wp.li.is_free_to_move()
+            if (this_moves and other_moves) or not (this_moves or other_moves):
+                for other_route in wp.li.routes_down or [{}]:
+                    wp.add_new_route({'ITEM': wp, Relation.PART.name: route}, other_route, wp_list)
 
         # 25.10. 2022
         # nyt jos reitit on luotu niin miten esitetään reittien yhdistäminen? Tämä olisi jonkinlainen
@@ -313,5 +335,6 @@ class WordPartList:
     def collect_previous_items(self):
         if len(self.word_parts) < 2:
             return []
-        current_parts = self.word_parts[-1].li.lex_parts or [self.word_parts[-1].li]
-        return [part for part in self.word_parts if part.li not in current_parts]
+        #current_parts = self.word_parts[-1].li.lex_parts or [self.word_parts[-1].li]
+        #return [part for part in self.word_parts if part.li not in current_parts]
+        return self.word_parts[:-1]

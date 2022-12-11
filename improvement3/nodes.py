@@ -126,23 +126,28 @@ class LexicalNode(Node):
         if edge not in other.edges_in:
             other.edges_in.append(edge)
 
+    def has_mover_feature(self):
+        for f_node in self.feats:
+            if f_node.name == 'moves':
+                return True
+        return False
+
     def is_word_head(self):
         return self.lex_parts[0] is self
 
     def is_free_to_move(self):
         if self.is_word_head():
             return False
-        word_head = self.lex_parts[0]
-        for f_node in word_head.feats:
-            if f_node.name == 'moves':
-                return True
-        return False
+        return self.lex_parts[0].has_mover_feature()
+
+    def is_mover_head(self):
+        return self.is_word_head() and self.has_mover_feature()
 
     @staticmethod
     def add_adjunction(first, second):
         if (find_edge(first.li.adjunctions, start=second, end=first)
            or find_edge(second.li.adjunctions, start=first, end=second)):
-            print('exists already')
+            print('  Nodes: exists already')
             return
         edge = AdjunctEdge(first, second)
         #first.li.adjunctions.append(edge)
@@ -232,19 +237,22 @@ class NegFeatureNode(FeatureNode):
                 if isinstance(e.start, (LexicalNode, CategoryNode)) and e.activations:
                     for signal in e.activations:
                         if signal not in lex_activations:
+                            print('  Nodes: receiving lex activation ', e.start, ' for ', self)
                             lex_activations.append(signal)
                 elif e.activations:
                     for signal in e.activations:
-                        if signal not in lex_activations or self.sign == '-':
-                            feat_activations.append(signal)
-                            print('feat activations at ', self, feat_activations)
+                        for lex_activation_signal in lex_activations:
+                            if signal != lex_activation_signal or self.sign == '-':
+                                feat_activations.append(signal)
+                                print('  Nodes: feat activations at ', self, feat_activations)
+                                break
             if lex_activations and feat_activations:
                 for head_signal in lex_activations:
                     for arg_signal in feat_activations:
                         if head_signal != arg_signal:
                             for out in self.edges_out:
                                 if self.sign == '-':
-                                    print('activating edge out from ', self, (head_signal, arg_signal),
+                                    print('  Nodes: activating edge out from ', self, (head_signal, arg_signal),
                                           'existing activations: ', out.activations)
                                 out.activate((head_signal, arg_signal))
                 self.active = True
@@ -284,17 +292,17 @@ class SymmetricMergeNode(MergeNode):
         accepted_signals = []
         for e in self.edges_in:
             if e.activations and isinstance(e.start, FeatureNode):
-                print('received activations:', e.activations)
+                print('  Nodes: received activations:', e.activations)
                 for head_signal_in, arg_signal_in in e.activations:
                     if arg_signal_in == right_signal:
                         accepted_signals.append((head_signal_in, arg_signal_in))
                     elif head_signal_in == right_signal:
                         accepted_signals.append((head_signal_in, arg_signal_in))
-        print('accepted signals at symmetric merge: ', accepted_signals)
-        print('n: ', n)
+        print('  Nodes: accepted signals at symmetric merge: ', accepted_signals)
+        print('  Nodes: n: ', n)
         if n in accepted_signals:
             self.activations.append(n)
-            print(f'at {self.id} adding left/right merge {n[0]}<->?{n[1]} where {n[0]} is head')
+            print(f'  Nodes: at {self.id} adding left/right merge {n[0]}<->?{n[1]} where {n[0]} is head')
             ctrl.g.add_merge(n[0], n[1])
             for out in self.edges_out:
                 for n in accepted_signals:
@@ -356,11 +364,11 @@ class SymmetricPairMergeNode(MergeNode):
                         accepted_signals.append((head_signal_in, arg_signal_in))
                     elif head_signal_in == right_signal:
                         accepted_signals.append((head_signal_in, arg_signal_in))
-        print('accepted signals at symmetric merge: ', accepted_signals)
-        print('n: ', n)
+        print('  Nodes: accepted signals at symmetric merge: ', accepted_signals)
+        print('  Nodes: n: ', n)
         if n in accepted_signals:
             self.activations.append(n)
-            print(f'at {self.id} adding pair merge {n[0]}<->?{n[1]} where {n[0]} is -')
+            print(f'  Nodes: at {self.id} adding pair merge {n[0]}<->?{n[1]} where {n[0]} is -')
             ctrl.g.add_adjunction(n[0], n[1])
             for out in self.edges_out:
                 for n in accepted_signals:
