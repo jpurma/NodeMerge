@@ -15,19 +15,29 @@ def includes(route, part):
         return True
     if 'ARG' in route and includes(route['ARG'], part):
         return True
-    if 'ADJUNCT' in route and includes(route['ADJUNCT'], part):
-        return True
+    if 'ADJUNCT' in route:
+        adjunct = route['ADJUNCT']
+        if isinstance(adjunct, list):
+            if any(includes(adj, part) for adj in adjunct):
+                return True
+        else:
+            if includes(adjunct, part):
+                return True
     return False
 
 
 def collect_signals(route, signals=None):
     if not signals:
         signals = set()
-    for key, value in route.items():
-        if key == 'ITEM':
-            signals.add(value.signal)
-        else:
-            collect_signals(value, signals)
+    if isinstance(route, list):
+        for item in route:
+            collect_signals(item, signals)
+    else:
+        for key, value in route.items():
+            if key == 'ITEM':
+                signals.add(value.signal)
+            else:
+                collect_signals(value, signals)
     # print('signals in route: ', route, signals)
     return signals
 
@@ -35,10 +45,14 @@ def collect_signals(route, signals=None):
 def print_route(route):
     this = route['ITEM']
     if 'ADJUNCT' in route:
-        if route['ITEM'].signal < route['ADJUNCT']['ITEM'].signal:
-            this = f"({this}+{print_route(route['ADJUNCT'])})"
-        else:
-            this = f"({print_route(route['ADJUNCT'])}+{this})"
+        adjuncts = route['ADJUNCT']
+        if not isinstance(adjuncts, list):
+            adjuncts = [adjuncts]
+        for adjunct in adjuncts:
+            if route['ITEM'].signal < adjunct['ITEM'].signal:
+                this = f"({this}+{print_route(adjunct)})"
+            else:
+                this = f"({print_route(adjunct)}+{this})"
     if 'ARG' in route:
         if route['ITEM'].signal < route['ARG']['ITEM'].signal and not route['ITEM'].li.is_free_to_move():
             this = f"({this}<-{print_route(route['ARG'])})"
@@ -56,8 +70,8 @@ def tree(route):
         a_label = str(item)
         if more_adjuncts:
             if item.signal < more_adjuncts['ITEM'].signal:
-                return f'{a_label}+{_build_label(more_adjuncts)}'
-            return f'{_build_label(more_adjuncts)}+{a_label}'
+                return f'({a_label}+{_build_label(more_adjuncts)})'
+            return f'({_build_label(more_adjuncts)}+{a_label})'
         return a_label
 
     label = str(route['ITEM'])
@@ -65,12 +79,16 @@ def tree(route):
     if 'PART' in route:
         this = f"[.{label} {route['ITEM']} {tree(route['PART'])}]"
     if 'ADJUNCT' in route:
-        if route['ITEM'].signal < route['ADJUNCT']['ITEM'].signal:
-            label = f"{label}+{_build_label(route['ADJUNCT'])}"
-            this = f"[.{label} {this} {tree(route['ADJUNCT'])}]"
-        else:
-            label = f"{_build_label(route['ADJUNCT'])}+{label}"
-            this = f"[.{label} {tree(route['ADJUNCT'])} {this}]"
+        adjuncts = route['ADJUNCT']
+        if not isinstance(adjuncts, list):
+            adjuncts = [adjuncts]
+        for adjunct in adjuncts:
+            if route['ITEM'].signal < adjunct['ITEM'].signal:
+                label = f"{label}+{_build_label(adjunct)}"
+                this = f"[.{label} {this} {tree(adjunct)}]"
+            else:
+                label = f"{_build_label(adjunct)}+{label}"
+                this = f"[.{label} {tree(adjunct)} {this}]"
     if 'ARG' in route:
         if route['ITEM'].signal < route['ARG']['ITEM'].signal and not route['ITEM'].li.is_free_to_move():
             return f"[.{label} {this} {tree(route['ARG'])}]"
@@ -84,14 +102,18 @@ def collect_arg_signals(route):
     signals = set()
 
     def _collect_arg_signals(route, arg):
-        for key, value in route.items():
-            if key == 'ITEM':
-                if arg:
-                    signals.add(value.signal)
-            elif key == 'ARG':
-                _collect_arg_signals(value, True)
-            else:
-                _collect_arg_signals(value, False)
+        if isinstance(route, list):
+            for item in route:
+                _collect_arg_signals(item, arg)
+        else:
+            for key, value in route.items():
+                if key == 'ITEM':
+                    if arg:
+                        signals.add(value.signal)
+                elif key == 'ARG':
+                    _collect_arg_signals(value, True)
+                else:
+                    _collect_arg_signals(value, False)
     _collect_arg_signals(route, False)
     return signals
 
@@ -100,8 +122,8 @@ def routes_overlap(route, other_route, route_signals=None):
     if not other_route:
         return False
     if (('ARG' in route and 'ARG' in other_route) or
-       ('PART' in route and 'PART' in other_route) or
-       ('ADJUNCT' in route and 'ADJUNCT' in other_route)):
+       ('PART' in route and 'PART' in other_route)): #or
+       #('ADJUNCT' in route and 'ADJUNCT' in other_route)):
         print('       routes overlap: two elements fill the same role')
         return True
     if not route_signals:
@@ -164,12 +186,24 @@ class WordPart:
 
     # {'ITEM': admires-2, 'ARG': {'ITEM': Pekka-1}, 'PART': {'ITEM': admires'-3, 'ARG': {'ITEM': Merja-4}}}
     def add_new_route(self, route, other_route, wp_list):
+        def bySignal(adj):
+            return adj['ITEM'].signal
+
         route_signals = collect_arg_signals(route)
         if routes_overlap(route, other_route, route_signals):
             #print('  routes overlap: ', route, other_route)
             return
         print('  add_new_route ', route, other_route, ' => ', route | other_route)
+        assert not other_route or (route['ITEM'] == other_route['ITEM'])
         new_combination = route | other_route
+        if other_route and 'ADJUNCT' in other_route and 'ADJUNCT' in route:
+            adjunct = route['ADJUNCT']
+            adjunct = adjunct if isinstance(adjunct, list) else [adjunct]
+            other_adjunct = other_route['ADJUNCT']
+            other_adjunct = other_adjunct if isinstance(other_adjunct, list) else [other_adjunct]
+            new_adjuncts = adjunct + other_adjunct
+            new_adjuncts.sort(key=bySignal)
+            new_combination['ADJUNCT'] = new_adjuncts
         if new_combination not in self.li.routes_down:
             print(f'    added route to {self}: {new_combination}')
             self.li.routes_down.append(new_combination)

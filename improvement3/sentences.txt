@@ -1,4 +1,7 @@
-Pekka ei antanut kukkiaF Merjalle
+Pekka ei antanut Merjalle kukkia yksin
+Pekka ei antanut yksin kukkia Merjalle
+Pekka ei antanut yksin Merjalle kukkia
+Pekka ei antanut kukkia Merjalle
 eikö Pekka ollut antanut Merjalle kukkia
 eiF Pekka antanut Merjalle kukkia
 Pekka ei antanut Merjalle kukkia

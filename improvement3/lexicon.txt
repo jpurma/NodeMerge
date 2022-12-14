@@ -23,13 +23,13 @@ kukan :: N:acc -a:acc|gen
 kiihkeästi :: a:v
 faintly :: a:v
 mostly :: a:v
-yksin :: a:v
+yksin :: a:v|n
 
 sad :: a:n -a:n
 big :: a:n -a:n
 young :: a:n -a:n
 
-Merjalle :: N:lle
+Merjalle :: a:lle -a:n
 MerjalleF :: F =f moves, f N:lle
 
 hyvän :: a:acc|gen
@@ -40,7 +40,7 @@ eikö :: ko moves =neg, neg =N:nom3sg, =v:inf|infO
 
 ollut :: v:infO =v:inf
 
-antanut :: v:inf =N:acc|prt, =N:lle -a:v
+antanut :: v:inf =N:acc|prt -a:v|lle
 
 että :: rel:että =T, N:nom3sg
 jonka :: rel:jo =T moves, N:acc
