@@ -8,6 +8,8 @@ from ctrl import ctrl
 
 class Node:
     color = [64, 64, 64, 128]
+    draw_in_route_mode = False
+    draw_in_feature_mode = True
 
     def __init__(self, id):
         self.id = id
@@ -52,12 +54,7 @@ class Node:
         self.label_item = Label(text=self.id)
         self.label_item.x = self.x - 20
         self.label_item.y = self.y - 10
-        words = ctrl.words
-        if words and words.current_item and words.current_item.li is self:
-            self.label_item.color = [1.0, 0.5, 0.5]
-        elif words and words.closest_item and words.closest_item.li is self:
-            self.label_item.color = [1.0, 0.4, 1.0]
-        elif self.active:
+        if self.active:
             self.label_item.color = [1.0, 1.0, 0.4]
         else:
             self.label_item.color = [0.7, 0.7, 0.7]
@@ -80,12 +77,13 @@ class Node:
                     activation = [activation]
                 for signal in activation:
                     Color(hue(signal), 0.8, 0.5, mode='hsv')
-                    Line(circle=[self.x, self.y, r], width=2)
+                    Line(circle=[self.x, self.y, r], width=4)
                     r += 4
 
 
 class LexicalNode(Node):
     color = [0.8, 0.8, 0.8, 0.5]
+    draw_in_route_mode = True
 
     def __init__(self, word, cats, feats, lex_parts):
         super().__init__(word)
@@ -97,8 +95,9 @@ class LexicalNode(Node):
         self.head_edges = []
         self.adjunctions = []
         self.routes_down = []
-        self.route_starts = {}
+        self.route_edges = []
         self.lex_parts = lex_parts
+        self.info_item = None
         for f_node in feats:
             self.connect(f_node)
         for c_node in cats:
@@ -112,6 +111,35 @@ class LexicalNode(Node):
                 for out in self.edges_out:
                     out.activate(n)
         self.active = bool(self.activations)
+
+    def count_routes_down(self):
+        edges_by_signal = {}
+        for edge in self.route_edges:
+            if edge.end_signal not in edges_by_signal:
+                edges_by_signal[edge.end_signal] = {edge.origin.signal}
+            else:
+                edges_by_signal[edge.end_signal].add(edge.origin.signal)
+        return '\n'.join(f'{signal}: {len(edges)}' for signal, edges in edges_by_signal.items())
+
+    def add_label(self):
+        self.label_item = Label(text=self.id)
+        self.label_item.x = self.x - 20
+        self.label_item.y = self.y - 10
+        words = ctrl.words
+        if words and words.current_item and words.current_item.li is self:
+            self.label_item.color = [1.0, 0.5, 0.5]
+        elif words and words.closest_item and words.closest_item.li is self:
+            self.label_item.color = [1.0, 0.4, 1.0]
+        elif self.active:
+            self.label_item.color = [1.0, 1.0, 0.4]
+        else:
+            self.label_item.color = [0.7, 0.7, 0.7]
+        ctrl.g.add_widget(self.label_item)
+        self.info_item = Label(text=self.count_routes_down())
+        self.info_item.x = self.x - 20
+        self.info_item.y = self.y - 50
+        self.info_item.color = [0.7, 0.7, 0.7]
+        ctrl.g.add_widget(self.info_item)
 
     def connect_lex_parts(self):
         if len(self.lex_parts) == 1:
@@ -136,12 +164,7 @@ class LexicalNode(Node):
         return self.lex_parts[0] is self
 
     def is_free_to_move(self):
-        if self.is_word_head():
-            return False
-        return self.lex_parts[0].has_mover_feature()
-
-    def is_mover_head(self):
-        return self.is_word_head() and self.has_mover_feature()
+        return self.has_mover_feature()
 
     @staticmethod
     def add_adjunction(first, second):

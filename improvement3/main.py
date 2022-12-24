@@ -1,4 +1,5 @@
 import json
+import math
 import socket
 
 from kivy.app import App
@@ -6,6 +7,7 @@ from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 from kivy.core.window import Window
 
+from improvement3.edges import RouteEdge
 from nodes import *
 from word_parts import WordPart, WordPartList, collect_signals, tree, print_route
 
@@ -33,10 +35,12 @@ class Network(Widget):
         self.merge_pair = None
         self.merge_ok = None
         self.words = None
+        self.route_mode = True
         self.ongoing_sentence = ""
         self.ongoing_sentence_label = Label(text="")
         self.ongoing_sentence_label.x = WIDTH / 2
         self.ongoing_sentence_label.y = 100
+        self.sentence_row_y = 0
         self.kataja_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.next_button = Button(text='Next step', font_size=14)
         self.next_button.x = 120
@@ -48,6 +52,12 @@ class Network(Widget):
         self.next_sen_button.y = 10
         self.add_widget(self.next_sen_button)
         self.next_sen_button.on_press = self.next_sentence
+        self.route_mode_button = Button(text='Routes /\nNetwork', font_size=14)
+        self.route_mode_button.x = WIDTH - 120
+        self.route_mode_button.y = 10
+        self.add_widget(self.route_mode_button)
+        self.route_mode_button.on_press = self.toggle_route_mode
+
         keyboard = Window.request_keyboard(self.handle_keyup, self)
         keyboard.bind(on_key_up=self.handle_keyup)
         Window.bind(on_request_close=self.on_request_close)
@@ -76,18 +86,45 @@ class Network(Widget):
         self.merge_pair = None
         self.merge_ok = None
 
+    def toggle_route_mode(self):
+        self.route_mode = not self.route_mode
+        if self.route_mode:
+            self.draw_sentence_circle()
+        else:
+            self.draw_sentence_row()
+        self.update_canvas()
+
     def update_canvas(self, *args):
         self.canvas.clear()
         self.clear_widgets()
-        for node in self.nodes.values():
-            node.draw()
-        for edge in self.edges.values():
-            edge.draw()
-        for node in self.nodes.values():
-            node.add_label()
+        if self.route_mode:
+            for edge in self.edges.values():
+                if edge.draw_in_route_mode:
+                    edge.draw()
+        else:
+            for edge in self.edges.values():
+                if edge.draw_in_feature_mode:
+                    edge.draw()
+        if self.route_mode:
+            for node in self.nodes.values():
+                if node.draw_in_route_mode:
+                    node.draw()
+        else:
+            for node in self.nodes.values():
+                if node.draw_in_feature_mode:
+                    node.draw()
+        if self.route_mode:
+            for node in self.nodes.values():
+                if node.draw_in_route_mode:
+                    node.add_label()
+        else:
+            for node in self.nodes.values():
+                if node.draw_in_feature_mode:
+                    node.add_label()
         self.add_widget(self.next_button)
         self.add_widget(self.next_sen_button)
         self.add_widget(self.ongoing_sentence_label)
+        self.add_widget(self.route_mode_button)
 
     def read_lexicon(self, lexicon_file, append=False, only_these=None):
         if not append:
@@ -171,7 +208,7 @@ class Network(Widget):
     def reset(self):
         self.words.reset()
         for edge in list(self.edges.values()):
-            if isinstance(edge, (MergeEdge, AdjunctEdge)):
+            if isinstance(edge, (MergeEdge, AdjunctEdge, RouteEdge)):
                 del self.edges[edge.id]
         for node in self.nodes.values():
             node.reset()
@@ -180,6 +217,7 @@ class Network(Widget):
                 node.arg_edges.clear()
                 node.adjunctions.clear()
                 node.routes_down.clear()
+                node.route_edges.clear()
 
     def next_word(self):
         if not self.words:
@@ -276,16 +314,31 @@ class Network(Widget):
                 feat_node.connect_positive()
             feat_node.set_pos(x, y)
         row += 1
+        self.sentence_row_y = row * row_height
+        for n, lex_node in enumerate(self.lexicon.values()):
+            lex_node.connect_lex_parts()
+        if self.route_mode:
+            self.draw_sentence_circle()
+        else:
+            self.draw_sentence_row()
+        self.update_canvas()
+
+    def draw_sentence_row(self):
         y_shift = 0
         for n, lex_node in enumerate(self.lexicon.values()):
             x = WIDTH / (len(self.lexicon) + 1) * (n + 1)
-            y = row * row_height + y_shift
+            y = self.sentence_row_y + y_shift
             y_shift += 20
             if y_shift > 60:
                 y_shift = 0
             lex_node.set_pos(x, y)
-            lex_node.connect_lex_parts()
-        self.update_canvas()
+
+    def draw_sentence_circle(self):
+        for n, lex_node in enumerate(self.lexicon.values()):
+            pi_step = (math.pi * 2 / len(self.lexicon)) * n + math.pi / 2
+            x = (math.cos(pi_step) * (WIDTH / -2 + 100)) + WIDTH / 2
+            y = (math.sin(pi_step) * (HEIGHT / 2 - 100)) + HEIGHT / 2 + 160
+            lex_node.set_pos(x, y)
 
     def build(self):
         self.sentences = [row.strip() for row in open(SENTENCES_PATH).readlines()
@@ -312,7 +365,8 @@ class Network(Widget):
         for word_part in self.words.word_parts:
             print(f'*** routes down from {word_part}:')
             for route in word_part.li.routes_down:
-                print(route)
+                print(print_route(route))
+                print(tree(route))
 
     def pick_optimal_route(self):
         total_routes = 0
@@ -321,7 +375,7 @@ class Network(Widget):
             print(f'*** routes down from {word_part}:')
             for route in word_part.li.routes_down:
                 total_routes += 1
-                print(route)
+                # print(route)
                 print(print_route(route))
                 if len(collect_signals(route)) == len(self.words.word_parts):
                     good_route = tree(route)
@@ -336,6 +390,12 @@ class Network(Widget):
             else:
                 print(f'found {int(len(good_routes) / 2)} good routes')
         print('total routes: ', total_routes)
+
+    def add_route_edge(self, start, end, origin):
+        if not RouteEdge.exists(start, end, origin):
+            edge = RouteEdge(start, end, origin)
+            if edge not in end.li.route_edges:
+                end.li.route_edges.append(edge)
 
 
 class NetworkApp(App):

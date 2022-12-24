@@ -1,5 +1,5 @@
-Pekka :: N:nom3sg|acc -a:n =rel:wh|jo
-Merja :: N:nom3sg|acc -a:n =rel:wh|jo
+Pekka :: N:nom3sg|acc -a:n =rel:wh|jo =Ting
+Merja :: N:nom3sg|acc -a:n =rel:wh|jo =Ting
 # Merja :: N:nom3sg -a:n =rel:wh|jo
 väite :: N:nom3sg a:n -a:n, =rel:että
 teoria :: N:nom3sg a:n -a:n
@@ -12,8 +12,8 @@ Merjaa :: N:prt -a:D <N:gen a:n =rel:jo
 Minttua :: N:prt a:n
 sitä :: N:prt a:D|n
 him  :: N:acc
-kukkia :: N:prt
-kukkiaF :: F moves =f, f N:prt
+kukkia :: N:prt -a:n-prt
+kukkiaF :: F moves =f, f N:prt -a:n-prt
 
 Pekan :: N:acc|gen
 avaimen :: N:acc -a:acc|gen
@@ -24,6 +24,8 @@ kiihkeästi :: a:v
 faintly :: a:v
 mostly :: a:v
 yksin :: a:v|n
+
+kauniita :: a:n-prt
 
 sad :: a:n -a:n
 big :: a:n -a:n
@@ -46,7 +48,7 @@ että :: rel:että =T, N:nom3sg
 jonka :: rel:jo =T moves, N:acc
 joka :: rel:jo =C moves, N:nom3sg
 whom :: rel:wh =T moves, N:acc
-who :: Q rel:wh =T moves, N:nom3sg|acc =Ting
+who :: Q rel:wh, =T, moves N:nom3sg|acc =Ting
 
 antaa :: T:a-inf =N:gen|nom3sg, v =N:acc|prt =N:lle =N:lla -a:v
 ihailla :: T:a-inf =N:gen -a:v, =N:prt =N:lla
