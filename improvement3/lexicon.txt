@@ -37,7 +37,7 @@ MerjalleF :: F =f moves, f N:lle
 hyvän :: a:acc|gen
 
 ei :: neg =N:nom3sg, =v:inf|infO
-eiF :: F moves =f, f neg =N:nom3sg, =v:inf|infO
+eiF :: neg =N:nom3sg, moves =v:inf|infO
 eikö :: ko moves =neg, neg =N:nom3sg, =v:inf|infO
 
 ollut :: v:infO =v:inf

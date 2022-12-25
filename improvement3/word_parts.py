@@ -44,6 +44,28 @@ def collect_signals(route, signals=None):
     return signals
 
 
+def collect_signals_and_movers(route, movers=None, signals=None, at_arg=False):
+    if signals is None:
+        signals = set()
+    if movers is None:
+        movers = set()
+    if isinstance(route, list):
+        for item in route:
+            collect_signals_and_movers(item, movers, signals, False)
+    else:
+        for key, value in route.items():
+            if key == 'ITEM':
+                if not (at_arg and value.li.is_free_to_move()):
+                    signals.add(value.signal)
+                else:
+                    movers.add(value.signal)
+            elif key == 'ARG':
+                collect_signals_and_movers(value, movers, signals, True)
+            else:
+                collect_signals_and_movers(value, movers, signals, False)
+    return movers, signals
+
+
 def print_route(route):
     if not route:
         return ''
@@ -68,6 +90,50 @@ def print_route(route):
 
 
 def tree(route):
+    def joined(listlike):
+        return '-'.join(str(l) for l in listlike)
+
+    def _build_label(adjunct):
+        item = adjunct['ITEM']
+        more_adjuncts = adjunct.get('ADJUNCT', None)
+        a_label = [item.signal]
+        if more_adjuncts:
+            adjunct_labels = _build_label(more_adjuncts)
+            return a_label + adjunct_labels if item.signal < more_adjuncts['ITEM'].signal else adjunct_labels + a_label
+        return a_label
+
+    label = [route['ITEM'].signal]
+    this = str(route['ITEM'])
+    if 'PART' in route:
+        this = f"[.{joined(label + list(collect_signals(route['PART'])))} {route['ITEM']}" \
+               f" {tree(route['PART'])}]"
+    if 'ADJUNCT' in route:
+        adjuncts = route['ADJUNCT']
+        if not isinstance(adjuncts, list):
+            adjuncts = [adjuncts]
+        for adjunct in adjuncts:
+            if route['ITEM'].signal < adjunct['ITEM'].signal:
+                label += _build_label(adjunct)
+                this = f"[.{joined(label)} {this} {tree(adjunct)}]"
+            else:
+                label = _build_label(adjunct) + label
+                this = f"[.{joined(label)} {tree(adjunct)} {this}]"
+    if 'ARG' in route:
+        if route['ITEM'].signal < route['ARG']['ITEM'].signal:
+            if route['ITEM'].li.is_free_to_move():
+                print('free to move case here:', collect_signals(route['ARG']), route['ITEM'], route['ARG']['ITEM'])
+                return f"[.{joined(collect_signals(route))} {tree(route['ARG'])} {this}]"
+            return f"[.{joined(collect_signals(route))} {this} {tree(route['ARG'])}]"
+        else:
+            print('ARG goes left: ', collect_signals(route['ARG']), route['ITEM'], route['ARG']['ITEM'],
+                  collect_signals(route))
+            return f"[.{joined(collect_signals(route))} {tree(route['ARG'])} {this}]"
+    if 'PART' not in route and 'ADJUNCT' not in route:
+        return str(route['ITEM'])
+    else:
+        return this
+
+def tree_o(route):
     def _build_label(adjunct):
         item = adjunct['ITEM']
         more_adjuncts = adjunct.get('ADJUNCT', None)
@@ -150,7 +216,7 @@ def check_that_no_duplicates(route):
         signal = route_part['ITEM'].signal
         if signal in signals:
             print('found signal twice: ', route_part['ITEM'])
-            raise hell
+            #raise hell
         signals.add(route_part['ITEM'].signal)
         if 'ARG' in route_part:
             collect_signals(route_part['ARG'])
@@ -179,20 +245,20 @@ class WordPart:
     def __hash__(self):
         return hash((self.li.id, self.signal))
 
-    def are_neighbors(self, route, other, other_route):
-        signals = collect_signals(route)
-        other_signals = collect_signals(other_route)
-        #print('are neighbors? ', signals, other_signals)
+    def are_neighbors(self, route, other, other_route, consider_movers=True):
+        movers, signals = collect_signals_and_movers(route)
+        other_movers, other_signals = collect_signals_and_movers(other_route)
         if not other_signals:
             return True
-        if signals & other_signals:
+        if (signals | movers) & (other_signals | other_movers):
             return False
-        if other_route['ITEM'].lex_part_signals() & signals:
+        print('are neighbors? ', self, movers, signals, other, other_movers, other_signals)
+        if other_route['ITEM'].lex_part_signals() & (signals | movers):
             #print('reject because neighbors are part of same word')
             return False
         # print(self.is_free_to_move_in_route(route), other.is_free_to_move_in_route(other_route))
         if self.li.is_free_to_move():
-            if other.signal > self.signal:
+            if self.signal < other.signal:
                 #print(f'   "{self}" (self) is free to move in route {route}')
                 return True
             else:
@@ -203,17 +269,14 @@ class WordPart:
                 return True
             else:
                 return False
-        if mover_signals := self.mover_signals():
-            signals |= mover_signals - other_signals
-        if other_mover_signals := other.mover_signals():
-            other_signals |= other_mover_signals - signals
-        #print('    are neighbors: ', self, other, signals, other_signals)
-        for signal in list(signals):
-            if signal > 1:
-                signals.add(signal - 1)
-            signals.add(signal + 1)
-        #print('      extended signals: ', signals, '  overlap: ', signals & other_signals)
-        return signals & other_signals
+        if self.signal < other.signal:
+            extended_signals = signals | other_movers
+            extended_signals.add(max(extended_signals) + 1)
+        else:
+            extended_signals = signals | movers
+            extended_signals.add(min(extended_signals) - 1)
+        print('      extended signals: ', extended_signals, '  overlap: ', extended_signals & other_signals)
+        return extended_signals & other_signals
 
     def is_free_to_move_in_route(self, route):
         #print(f'is "{self}" free to move in route {route}?')
@@ -321,6 +384,7 @@ class WordPart:
         print('walking all routes up from ', self, ' with route ', print_route(route))
 
         if route not in self.li.routes_down:
+            print('adding simple route: ', print_route(route))
             check_that_no_duplicates(route)
             self.li.routes_down.append(route)
 
@@ -330,7 +394,7 @@ class WordPart:
             other = edge.start
             for other_route in other.li.routes_down or [{}]:
                 if self.are_neighbors(route, other, other_route):
-                    print(f'  <-> adj route from {other} to {edge.head} in context of {print_route(other_route)}')
+                    print(f'  <-> adj route from {other} to {edge.end} in context of {print_route(other_route)}')
                     other.add_new_route({'ITEM': other, Relation.ADJUNCT.name: route}, other_route, wp_list)
 
         for edge in self.li.head_edges:
@@ -348,6 +412,8 @@ class WordPart:
             wp = wp_list.word_parts[self.signal - 2]  # this is previous word part as signals start at 1
             this_moves = self.li.is_free_to_move()
             other_moves = wp.li.is_free_to_move()
+            # liikkujakaan ei voi olla rakenteessa kuin kerran, joten ei laiteta sitä PART-suhteella
+            # alkuperäiselle paikalleen
             if (this_moves and other_moves) or not (this_moves or other_moves) and not includes(route, wp):
                 for other_route in wp.li.routes_down or [{}]:
                     print(f'  . part route from {print_route(route)} to {wp} in context of {print_route(other_route)}')
