@@ -9,7 +9,7 @@ from kivy.core.window import Window
 
 from improvement3.edges import RouteEdge
 from nodes import *
-from word_parts import WordPart, WordPartList, collect_signals, tree, print_route
+from word_parts import WordPart, WordPartList, Route
 
 N_SIZE = 3
 WIDTH = 1600
@@ -234,11 +234,11 @@ class Network(Widget):
             self.activate_current_words()
         print(f'*** {self.words.current_item} ***')
         self.words.current_item.li.routes_down = []
-        self.words.current_item.walk_all_routes_up({'ITEM': self.words.current_item}, self.words)
+        Route(wp=self.words.current_item).walk_all_routes_up(self.words)
         print(self.words.current_item.li.routes_down)
         for wp in reversed(self.words.word_parts[:-1]):
             print(f'*** Revisiting {wp} ***')
-            wp.walk_all_routes_up({'ITEM': wp}, self.words)
+            Route(wp=wp).walk_all_routes_up(self.words)
         if self.words.is_last():
             self.pick_optimal_route()
         else:
@@ -365,8 +365,7 @@ class Network(Widget):
         for word_part in self.words.word_parts:
             print(f'*** routes down from {word_part}:')
             for route in word_part.li.routes_down:
-                print(print_route(route))
-                print(tree(route))
+                print(route.print_route())
 
     def pick_optimal_route(self):
         total_routes = 0
@@ -376,9 +375,9 @@ class Network(Widget):
             for route in word_part.li.routes_down:
                 total_routes += 1
                 # print(route)
-                print(print_route(route))
-                if len(collect_signals(route)) == len(self.words.word_parts):
-                    good_route = tree(route)
+                print(route.print_route())
+                if len(route.signals) == len(self.words.word_parts):
+                    good_route = route.tree()
                     good_routes.append(good_route)
                     good_routes.append("")
                     print(good_route)
@@ -421,3 +420,4 @@ if __name__ == '__main__':
 # jossa ei ole siirretty. Myös pitää katsoa onko tuossa todella sattunut kallista siirtymää, nyt hinnaksi lasketaan
 # 2,4. Jotenkin pitäisi päätyä siihen että jos sana koostuu monesta elementistä, sen ohi hyppääminen ei silti ole
 # kuin yksi askel. Koitetaan aluksi korjata sitä.
+
