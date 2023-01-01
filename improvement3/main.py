@@ -372,7 +372,9 @@ class Network(Widget):
         good_routes = []
         for word_part in reversed(self.words.word_parts):
             print(f'*** routes down from {word_part}: ({len(word_part.li.routes_down)})')
+            set_routes = set()
             for route in word_part.li.routes_down:
+                set_routes.add(frozenset(route.signals))
                 if route.wp is not word_part:
                     continue
                 total_routes += 1
@@ -383,6 +385,7 @@ class Network(Widget):
                     good_routes.append(good_route)
                     good_routes.append("")
                     print(good_route)
+            print(f'routes len: {len(word_part.li.routes_down)}, route set len: {len(set_routes)}')
 
         if good_routes:
             if self.send(json.dumps(good_routes)):

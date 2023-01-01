@@ -3,7 +3,7 @@ Pekka :: N:nom3sg|acc -a:n =rel:wh|jo =Ting
 #Merja :: N:nom3sg -a:n =rel:wh|jo
 Merja :: N:nom3sg|acc -a:n =rel:wh|jo =Ting
 väite :: N:nom3sg a:n -a:n, =rel:että
-teoria :: N:nom3sg a:n -a:n
+teoria :: N:nom3sg a:n -a:n, =rel:että
 se :: N:nom3sg a:n
 sopimus :: N:nom3sg -a:D|a =T:a-inf
 hän :: N:nom3sg
@@ -56,7 +56,7 @@ jäätyään :: a:v3sg =N:iin|lle|ilman
 
 ilman :: N:ilman =N:prt
 
-että :: rel:että =T, N:nom3sg
+että :: rel:että, =T, N:nom3sg
 jonka :: rel:jo =T, moves N:acc
 joka :: rel:jo =C, moves N:nom3sg
 whom :: rel:wh =T, moves N:acc
@@ -84,8 +84,8 @@ yksinkö :: ko moves =T, a:v
 
 sanoin :: T:pst =N:nom1sg -a:v, =N:prt =rel:että N:nom1sg
 sanoi :: T:pst =N:nom3sg -a:v, =N:prt =rel:että
-kumoutui :: =N:nom3sg, T:pst
-hylättiin :: =N:pass T:pst, =N:nom3sg
+kumoutui :: =N:nom3sg T:pst
+hylättiin :: =N:nom3sg T:pst
 ihaili :: =N:nom3sg T:pst -a:v, =N:prt
 näki :: =N:nom3sg T:pst, =N:prt|acc
 peruuntui :: T:pst -a:v, =N:nom3sg

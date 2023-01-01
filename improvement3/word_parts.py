@@ -243,13 +243,17 @@ class Route:
             arg=self.arg or other_route.arg,
             adjuncts=self.adjuncts + other_route.adjuncts)
         if new_combination not in self.wp.li.routes_down:
-            print(f'  add_new_route: {self} (head: {self.wp})')
-            print(f'                 {other_route}')
-            print(f'              => {new_combination}')
-            print(f'    new combination for {self.wp}: {new_combination.print_route()}')
-            print(f'      based on {self.print_route()} and {other_route.print_route()}')
-            new_combination.add_route_edges()
-            self.wp.li.routes_down.append(new_combination)
+            same_signals = [rd for rd in self.wp.li.routes_down if rd.signals == new_combination.signals]
+            if same_signals:
+                print('skipping this because there is already route with same signals: ', new_combination.signals)
+            else:
+                print(f'  add_new_route: {self} (head: {self.wp})')
+                print(f'                 {other_route}')
+                print(f'              => {new_combination}')
+                print(f'    new combination for {self.wp}: {new_combination.print_route()}')
+                print(f'      based on {self.print_route()} and {other_route.print_route()}')
+                new_combination.add_route_edges()
+                self.wp.li.routes_down.append(new_combination)
         new_combination.walk_all_routes_up(wp_list)
 
     def walk_all_routes_up(self, wp_list):
@@ -268,7 +272,11 @@ class Route:
 
         if self not in self.wp.li.routes_down:
             print('adding simple route: ', self.print_route())
-            self.wp.li.routes_down.append(self)
+            same_signals = [rd for rd in self.wp.li.routes_down if rd.signals == self.signals]
+            if same_signals:
+                print('skipping this because there is already route with same signals: ', self.signals)
+            else:
+                self.wp.li.routes_down.append(self)
 
         for edge in self.wp.li.adjunctions:
             if edge.start == self.wp:
