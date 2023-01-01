@@ -116,9 +116,9 @@ class LexicalNode(Node):
         edges_by_signal = {}
         for edge in self.route_edges:
             if edge.end_signal not in edges_by_signal:
-                edges_by_signal[edge.end_signal] = {edge.origin.signal}
+                edges_by_signal[edge.end_signal] = {edge.origin}
             else:
-                edges_by_signal[edge.end_signal].add(edge.origin.signal)
+                edges_by_signal[edge.end_signal].add(edge.origin)
         return '\n'.join(f'{signal}: {len(edges)}' for signal, edges in edges_by_signal.items())
 
     def add_label(self):

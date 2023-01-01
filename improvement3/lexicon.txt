@@ -1,7 +1,7 @@
-Pekka :: N:nom3sg -a:n =rel:wh|jo =Ting
-# Pekka :: N:nom3sg|acc -a:n =rel:wh|jo =Ting
-Merja :: N:nom3sg -a:n =rel:wh|jo
-# Merja :: N:nom3sg|acc -a:n =rel:wh|jo =Ting
+#Pekka :: N:nom3sg -a:n =rel:wh|jo =Ting
+Pekka :: N:nom3sg|acc -a:n =rel:wh|jo =Ting
+#Merja :: N:nom3sg -a:n =rel:wh|jo
+Merja :: N:nom3sg|acc -a:n =rel:wh|jo =Ting
 väite :: N:nom3sg a:n -a:n, =rel:että
 teoria :: N:nom3sg a:n -a:n
 se :: N:nom3sg a:n
@@ -14,6 +14,7 @@ Minttua :: N:prt a:n
 sitä :: N:prt a:D|n
 him  :: N:acc
 kukkia :: N:prt -a:n-prt
+kukkaa :: N:prt -a:n-prt =rel:wh|jo
 kukkiaF :: F moves =f, f N:prt -a:n-prt
 nimmaria :: N:prt -a:n-prt =N:gen
 
@@ -21,6 +22,7 @@ kotiin :: N:iin
 
 # Pekan :: N:acc|gen =N:prt|acc|nom3sg
 Pekan :: N:gen|gen
+Jarin :: N:gen|gen
 avaimen :: N:acc -a:acc|gen
 sopimuksen :: N:acc -a:acc|gen
 kukan :: N:acc -a:acc|gen
@@ -55,11 +57,12 @@ jäätyään :: a:v3sg =N:iin|lle|ilman
 ilman :: N:ilman =N:prt
 
 että :: rel:että =T, N:nom3sg
-jonka :: rel:jo =T moves, N:acc
-joka :: rel:jo =C moves, N:nom3sg
-whom :: rel:wh =T moves, N:acc
+jonka :: rel:jo =T, moves N:acc
+joka :: rel:jo =C, moves N:nom3sg
+whom :: rel:wh =T, moves N:acc
 who :: Q rel:wh, =T, moves N:nom3sg|acc =Ting
 kenen :: Q rel:wh, =T, moves N:gen
+jota :: rel:jo, =T, moves N:prt
 
 antaa :: T:a-inf =N:gen|nom3sg, v =N:acc|prt =N:lle =N:lla -a:v
 ihailla :: T:a-inf =N:gen -a:v, =N:prt =N:lla
@@ -73,6 +76,8 @@ admires :: T:prees =N:nom3sg -a:v, =N:acc -a:v
 ihailee :: T:prees =N:nom3sg -a:v, =N:prt
 ihailen :: T:prees =N:nom1sg -a:v, =N:prt
 
+pärjää :: T:prees v:inf =N:nom3sg -a:v, =N:ilman
+
 nukkuuko :: ko moves =T, T:prees =N:nom3sg, v -a:v
 antaako :: ko moves =T, T:prees =N:nom3sg, v =N:acc|prt -a:v
 yksinkö :: ko moves =T, a:v
@@ -81,7 +86,7 @@ sanoin :: T:pst =N:nom1sg -a:v, =N:prt =rel:että N:nom1sg
 sanoi :: T:pst =N:nom3sg -a:v, =N:prt =rel:että
 kumoutui :: =N:nom3sg, T:pst
 hylättiin :: =N:pass T:pst, =N:nom3sg
-ihaili :: =N:nom3sg T:pst, =N:prt
+ihaili :: =N:nom3sg T:pst -a:v, =N:prt
 näki :: =N:nom3sg T:pst, =N:prt|acc
 peruuntui :: T:pst -a:v, =N:nom3sg
 rakasti :: T:pst =N:nom3sg, =N:prt -a:v

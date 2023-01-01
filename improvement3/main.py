@@ -233,9 +233,7 @@ class Network(Widget):
         if self.words.can_merge():
             self.activate_current_words()
         print(f'*** {self.words.current_item} ***')
-        self.words.current_item.li.routes_down = []
         Route(wp=self.words.current_item).walk_all_routes_up(self.words)
-        print(self.words.current_item.li.routes_down)
         for wp in reversed(self.words.word_parts[:-1]):
             print(f'*** Revisiting {wp} ***')
             Route(wp=wp).walk_all_routes_up(self.words)
@@ -363,19 +361,23 @@ class Network(Widget):
 
     def show_current_routes(self):
         for word_part in self.words.word_parts:
-            print(f'*** routes down from {word_part}:')
+            print(f'*** routes down from {word_part}: ({len(word_part.li.routes_down)})')
             for route in word_part.li.routes_down:
-                print(route.print_route())
+                if route.wp is not word_part:
+                    continue
+                print(route.print_route(), ' head: ', route.wp)
 
     def pick_optimal_route(self):
         total_routes = 0
         good_routes = []
         for word_part in reversed(self.words.word_parts):
-            print(f'*** routes down from {word_part}:')
+            print(f'*** routes down from {word_part}: ({len(word_part.li.routes_down)})')
             for route in word_part.li.routes_down:
+                if route.wp is not word_part:
+                    continue
                 total_routes += 1
                 # print(route)
-                print(route.print_route())
+                print(route.print_route(), ' head: ', route.wp)
                 if len(route.signals) == len(self.words.word_parts):
                     good_route = route.tree()
                     good_routes.append(good_route)

@@ -1,4 +1,3 @@
-from enum import Enum
 from ctrl import ctrl
 
 
@@ -19,6 +18,7 @@ class Route:
         if self.adjuncts:
             for adjunct in self.adjuncts:
                 self.signals |= adjunct.signals
+        self.signals = set(sorted(list(self.signals)))
 
     def __eq__(self, other):
         if not isinstance(other, Route):
@@ -59,16 +59,22 @@ class Route:
         if at_arg:
             arg_signals.add(self.wp.signal)
         if self.arg:
-            self.arg.collect_movers(arg_signals, at_arg=True)
+            self.arg.collect_arg_signals(arg_signals, at_arg=True)
         if self.part:
-            self.part.collect_movers(arg_signals)
+            self.part.collect_arg_signals(arg_signals)
         if self.adjuncts:
             for adjunct in self.adjuncts:
-                adjunct.collect_movers(arg_signals)
+                adjunct.collect_arg_signals(arg_signals)
         return arg_signals
 
+    def __str__(self):
+        return self.print_route()
+
+    def __repr__(self):
+        return f'Route({self.print_route()})'
+
     def print_route(self):
-        this = self.wp
+        this = str(self.wp)
         if self.adjuncts:
             for adjunct in self.adjuncts:
                 if self.wp.signal < adjunct.wp.signal:
@@ -114,11 +120,9 @@ class Route:
         if self.arg:
             if self.wp.signal < self.arg.wp.signal:
                 if self.wp.li.is_free_to_move():
-                    print('free to move case here:', self.arg.signals, self.wp, self.arg.wp)
                     return f"[.{joined(self.signals)} {self.arg.tree()} {this}]"
                 return f"[.{joined(self.signals)} {this} {self.arg.tree()}]"
             else:
-                print('ARG goes left: ', self.arg.signals, self.wp, self.arg.wp, self.signals)
                 return f"[.{joined(self.signals)} {self.arg.tree()} {this}]"
         if not (self.part or self.adjuncts):
             return str(self.wp)
@@ -173,30 +177,14 @@ class Route:
         return arg_signals & other_route.collect_arg_signals()
 
     def add_route_edges(self):
-        def collect_origins(route, prev_items):
-            if route.arg:
-                prev_items.add(route.arg.wp)
-                collect_origins(route.arg, prev_items)
-            for adj in route.adjuncts:
-                prev_items.add(adj.wp)
-                collect_origins(adj, prev_items)
-            if route.part:
-                prev_items.add(route.part.wp)
-                collect_origins(route.part, prev_items)
-            return prev_items
-
         if self.arg:
-            origins = collect_origins(self.arg, {self.arg.wp})
-            for origin in origins:
+            for origin in self.arg.signals:
                 ctrl.g.add_route_edge(self.arg.wp, self.wp, origin)
-
-            for adj in self.adjuncts:
-                origins = collect_origins(adj, {adj.wp})
-                for origin in origins:
-                    ctrl.g.add_route_edge(adj.wp, self.wp, origin)
+        for adj in self.adjuncts:
+            for origin in adj.signals:
+                ctrl.g.add_route_edge(adj.wp, self.wp, origin)
         if self.part:
-            origins = collect_origins(self.part, {self.part.wp})
-            for origin in origins:
+            for origin in self.part.signals:
                 ctrl.g.add_route_edge(self.part.wp, self.wp, origin)
 
     def are_neighbors(self, other, other_route):
@@ -208,11 +196,12 @@ class Route:
             return True
         if self.signals & other_route.signals:
             return False
-        if other.mover_signals():
+        if other.mover_signals() and False:
             # voi olla tilanne jossa on "who' [who'' x y z...] meets" jossa ei tiedetä kuinka paljon elementtejä sopii
             # väliin. Annetaan niissä kaikkien kelvata.
+            #print('other has mover signals. Accept everything')
             return True
-        print('are neighbors? ', self.wp, movers, signals, other, other_movers, other_signals)
+        #print('are neighbors? ', self.wp, movers, self.signals, other, other_movers, other_route.signals)
         if other_route.wp.lex_part_signals() & self.signals:
             #print('reject because neighbors are part of same word')
             return False
@@ -234,27 +223,29 @@ class Route:
         else:
             extended_signals = signals | movers
             extended_signals.add(min(extended_signals) - 1)
-        print('      extended signals: ', extended_signals, '  overlap: ', extended_signals & other_signals)
+        #print('      extended signals: ', extended_signals, '  overlap: ', extended_signals & other_signals)
         return extended_signals & other_signals
 
     def add_new_route(self, other_route, wp_list):
-        def bySignal(adj):
-            return adj.wp.signal
-
+        if self == other_route:
+            return
         if self.routes_overlap(other_route):
             #print('  routes overlap: ', self, other_route)
+            #print('  ', self.signals, other_route.signals)
+            #print('  ', self.collect_arg_signals(), other_route.collect_arg_signals())
+            # assert set(list(sorted(self.signals))[1:]) & other_route.signals
             return
-        assert not other_route or (self.wp == other_route.wp)
-        assert self.arg != other_route.arg or self.adjuncts != other_route.adjuncts or self.part != other_route.part
+        #assert not other_route or (self.wp == other_route.wp)
+        #assert self.arg != other_route.arg or self.adjuncts != other_route.adjuncts or self.part != other_route.part
         new_combination = Route(
             wp=self.wp,
             part=self.part or other_route.part,
             arg=self.arg or other_route.arg,
-            adjuncts=list(sorted(self.adjuncts + other_route.adjuncts, key=bySignal)))
+            adjuncts=self.adjuncts + other_route.adjuncts)
         if new_combination not in self.wp.li.routes_down:
-            print('  add_new_route: ', self)
-            print('                 ', other_route)
-            print('              => ', new_combination)
+            print(f'  add_new_route: {self} (head: {self.wp})')
+            print(f'                 {other_route}')
+            print(f'              => {new_combination}')
             print(f'    new combination for {self.wp}: {new_combination.print_route()}')
             print(f'      based on {self.print_route()} and {other_route.print_route()}')
             new_combination.add_route_edges()
@@ -273,7 +264,7 @@ class Route:
         # tähänastisen reitin. Ensimmäisen askeleen jälkeen se on olio ja yhteys joka näitä yhdisti.
 
         # Selkeyden vuoksi yritetään pitää nyt erillään reitin luominen ja reittien yhdistäminen.
-        print('walking all routes up from ', self.wp, ' with route ', self.print_route())
+        #print('walking all routes up from ', self.wp, ' with route ', self.print_route())
 
         if self not in self.wp.li.routes_down:
             print('adding simple route: ', self.print_route())
@@ -283,20 +274,23 @@ class Route:
             if edge.start == self.wp:
                 continue
             other = edge.start
-            for other_route in other.li.routes_down or [{}]:
+            for other_route in other.li.routes_down:
+                if other != other_route.wp:
+                    continue
                 if self.are_neighbors(other, other_route):
-                    print(f'  <-> adj route from {other} to {edge.end} in context of {other_route.print_route()}')
+                    #print(f'  <-> adj route from {other} to {edge.end} in context of {other_route.print_route()}')
                     other_route.add_new_route(Route(wp=other, adjuncts=self), wp_list)
 
         for edge in self.wp.li.head_edges:
             # pitäisi todeta että edge.head:n hallitsema alue ulottuu self:n hallitseman alueen naapuriksi.
             # route pitäisi ymmärtää laajemmin, niin että se kattaa myös yhdistelmät
-            for other_route in edge.head.li.routes_down or [{}]:
-                if not self.includes(edge.head) and self.wp.signal not in self.collect_arg_signals():
-                    if self.are_neighbors(edge.head, other_route):
-                        print(f'  -> arg route from {self.wp} to {edge.head} in context of '
-                              f'{other_route.print_route()}')
-                        other_route.add_new_route(Route(wp=edge.head, arg=self), wp_list)
+            for other_route in edge.head.li.routes_down:
+                if edge.head != other_route.wp:
+                    continue
+                if self.are_neighbors(edge.head, other_route):
+                    #print(f'  -> arg route from {self.wp} to {edge.head} in context of '
+                    #  f'{other_route.print_route()}')
+                    other_route.add_new_route(Route(wp=edge.head, arg=self), wp_list)
 
         is_later_part = self.wp.li.lex_parts.index(self.wp.li)
         if is_later_part:
@@ -307,9 +301,18 @@ class Route:
             # alkuperäiselle paikalleen
             if (this_moves and other_moves) or not (this_moves or other_moves) and not self.includes(wp):
                 for other_route in wp.li.routes_down:
-                    print(f'  . part route from {self.print_route()} to {wp} in context of'
-                          f' {other_route.print_route()}')
-                    other_route.add_new_route(Route(wp=wp, part=self), wp_list)
+                    if wp != other_route.wp:
+                        continue
+                    if Route(wp=wp, part=self).routes_overlap(other_route):
+                        #print('  routes overlap at part merge: ', Route(wp=wp, part=self), other_route)
+                        pass
+                        #if not self.signals & other_route.signals:
+                            #print('  signals do not overlap: ', self.signals, other_route.signals)
+                            #raise hell
+                    else:
+                        #print(f'  . part route from {self.print_route()} to {wp} in context of'
+                        #      f' {other_route.print_route()}')
+                        other_route.add_new_route(Route(wp=wp, part=self), wp_list)
 
 
 class WordPart:
@@ -340,8 +343,6 @@ class WordPart:
             return signals
         for i, lex_part in enumerate(self.li.lex_parts[lex_part_index + 1:], 1):
             if lex_part.is_free_to_move():
-                print('found ', lex_part, self.signal, i)
-                print('it has routes: ', lex_part.routes_down)
                 signals.add(self.signal + i)
             else:
                 return signals

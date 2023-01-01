@@ -73,26 +73,27 @@ class RouteEdge(Edge):
     draw_in_feature_mode = False
 
     def __init__(self, start, end, origin):
-        edge_id = f'{start.signal}_{end.signal}O{origin.signal}'
+        edge_id = f'{start.signal}_{end.signal}O{origin}'
         super().__init__(start.li, end.li, id=edge_id)
         self.start_signal = start.signal
         self.end_signal = end.signal
         self.origin = origin
 
     def draw(self):
-        dx, dy = radial_pos(self.origin.signal, self.start_signal, ctrl.words.signal_count, len(ctrl.g.lexicon), 40)
-        ex, ey = radial_pos(self.origin.signal, self.end_signal, ctrl.words.signal_count, len(ctrl.g.lexicon), 40)
+        dx, dy = radial_pos(self.origin, self.start_signal, ctrl.words.signal_count, len(ctrl.g.lexicon), 40)
+        ex, ey = radial_pos(self.origin, self.end_signal, ctrl.words.signal_count, len(ctrl.g.lexicon), 40)
         cx = self.start.x + dx + (self.end.x + ex - (self.start.x + dx)) * .9
         cy = self.start.y + dy + (self.end.y + ey - (self.start.y + dy)) * .9
 
         with ctrl.g.canvas:
-            Color(hue(self.origin.signal), 0.8, 0.5, mode='hsv')
+            Color(hue(self.origin), 0.8, 0.5, mode='hsv')
             Line(points=[self.start.x + dx, self.start.y + dy, self.end.x + ex, self.end.y + ey], width=2)
             Line(circle=[cx, cy, 3], width=2)
 
     @staticmethod
     def exists(start, end, origin):
-        return f'{start.signal}_{end.signal}O{origin.signal}' in ctrl.edges
+        return f'{start.signal}_{end.signal}O{origin}' in ctrl.edges
+
 
 class LexEdge(Edge):
     @staticmethod

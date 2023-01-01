@@ -1,3 +1,20 @@
+Pekka ihailee kukkaa jota Merja ihaili
+Pekka ihailee kukkaa jota Merja ihailee
+Pekka ihailee kukkaa jota Merja ei pärjää ilman
+Pekka ihailee kukkaa jota ilman Merja ei pärjää
+
+jäätyään ilman kenen nimmaria Merja palasi suruissaan kotiin
+kenen nimmaria ilman jäätyään Merja palasi suruissaan kotiin
+kenen nimmaria jäätyään ilman Merja palasi suruissaan kotiin
+Merja palasi suruissaan kotiin jäätyään ilman kenen nimmaria
+Merja palasi suruissaan kotiin ilman jäätyään kenen nimmaria
+
+jäätyään ilman Jarin nimmaria Merja palasi suruissaan kotiin
+Jarin nimmaria ilman jäätyään Merja palasi suruissaan kotiin
+Jarin nimmaria jäätyään ilman Merja palasi suruissaan kotiin
+Merja palasi suruissaan kotiin jäätyään ilman Jarin nimmaria
+Merja palasi suruissaan kotiin ilman jäätyään Jarin nimmaria
+
 kenen nimmaria ilman jäätyään Merja palasi suruissaan kotiin
 Merja palasi suruissaan kotiin jäätyään ilman Pekan nimmaria
 kenen nimmaria ilman jäätyään Merja palasi suruissaan kotiin
