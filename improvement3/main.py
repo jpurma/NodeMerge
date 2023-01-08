@@ -230,14 +230,23 @@ class Network(Widget):
             self.update_sentence()
 
         self.clear_activations()
+        print()
+        print(f'** Activating {self.words.current_item} ***')
         if self.words.can_merge():
             self.activate_current_words()
-        print(f'*** {self.words.current_item} ***')
+        print()
+        print(f'*** Handling {self.words.current_item} ***')
         Route(wp=self.words.current_item).walk_all_routes_up(self.words)
         for wp in reversed(self.words.word_parts[:-1]):
-            print(f'*** Revisiting {wp} ***')
+            print()
+            print(f' *** Revisiting {wp} ***')
             Route(wp=wp).walk_all_routes_up(self.words)
         if self.words.is_last():
+            print('****************************************')
+            print('*                                      *')
+            print('* Done parsing, now pick optimal route *')
+            print('*                                      *')
+            print('****************************************')
             self.pick_optimal_route()
         else:
             self.show_current_routes()
@@ -353,25 +362,27 @@ class Network(Widget):
     def activate_current_words(self):
         lefts = list(reversed(self.words.prev_items))
         right = self.words.current_item
+        print(f' Main: *** activate {lefts}+{right}')
         right.li.activate(right.signal)
         for left in reversed(lefts):
             left.li.activate(left.signal)
-        print(f'    Main: *** activate {lefts}+{right}')
         self.update_canvas()
 
     def show_current_routes(self):
         for word_part in self.words.word_parts:
-            print(f'*** routes down from {word_part}: ({len(word_part.li.routes_down)})')
+            indent = ' ' * word_part.signal
+            print(f'{indent}*** routes down from {word_part}: ({len(word_part.li.routes_down)})')
             for route in word_part.li.routes_down:
                 if route.wp is not word_part:
                     continue
-                print(route.print_route(), ' head: ', route.wp)
+                print(f'{indent}{route.print_route()}')
 
     def pick_optimal_route(self):
         total_routes = 0
         good_routes = []
         for word_part in reversed(self.words.word_parts):
-            print(f'*** routes down from {word_part}: ({len(word_part.li.routes_down)})')
+            indent = ' ' * word_part.signal
+            print(f'{indent}*** routes down from {word_part}: ({len(word_part.li.routes_down)})')
             set_routes = set()
             for route in word_part.li.routes_down:
                 set_routes.add(frozenset(route.signals))
@@ -379,13 +390,13 @@ class Network(Widget):
                     continue
                 total_routes += 1
                 # print(route)
-                print(route.print_route(), ' head: ', route.wp)
+                print(f'{indent}{route.print_route()}')
                 if len(route.signals) == len(self.words.word_parts):
                     good_route = route.tree()
                     good_routes.append(good_route)
                     good_routes.append("")
                     print(good_route)
-            print(f'routes len: {len(word_part.li.routes_down)}, route set len: {len(set_routes)}')
+            print(f'{indent} routes len: {len(word_part.li.routes_down)}, route set len: {len(set_routes)}')
 
         if good_routes:
             if self.send(json.dumps(good_routes)):

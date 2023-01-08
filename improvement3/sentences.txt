@@ -1,10 +1,16 @@
+jota Merja ei ihaile
+Pekka ihailee kukkaa jota Merja ihaili
+Pekka ihailee kukkaa jota ilman Merja ei pärjää
+ilmanF kukkaa Merja ei pärjää
+Merja ei pärjää ilman kukkaa
+
+kenen hiuksia Pekka ihaili
 Pekka sanoi että se väite että teoria hylättiin kumoutui
 Pekka sanoi että se väite että teoria kumoutui hylättiin
 
-Pekka ihailee kukkaa jota Merja ihaili
 Pekka ihailee kukkaa jota Merja ihailee
 Pekka ihailee kukkaa jota Merja ei pärjää ilman
-Pekka ihailee kukkaa jota ilman Merja ei pärjää
+Pekka ihailee kukkaa jota Merja ei ilman pärjää
 
 jäätyään ilman kenen nimmaria Merja palasi suruissaan kotiin
 kenen nimmaria ilman jäätyään Merja palasi suruissaan kotiin
