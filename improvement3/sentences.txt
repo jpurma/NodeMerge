@@ -1,10 +1,38 @@
-jota Merja ei ihaile
-Pekka ihailee kukkaa jota Merja ihaili
+ei ollut Pekka antanut Merjalle kukkia
+eiF ollut Pekka antanut Merjalle kukkia
+ei Pekka ollut antanut Merjalle kukkia
+eiF Pekka ollut antanut Merjalle kukkia
+ei ollut antanut Merjalle kukkia Pekka
+eikö Pekka ollut antanut Merjalle kukkia
+Pekka ei ollut antanut Merjalle kukkia
+antaako Merja kukan yksin
+Merja who he saw admiring him admires Pekka
+Merja who he saw admiring him
+Pekka saw Merja who he admires
+Pekka saw Merja who he admires admiring him
+Pekka ihailee Merjaa
+Pekka ei antanut Merjalle kauniita kukkia yksin
+Pekka ei antanut kauniita yksin kukkia Merjalle
+Pekka ei antanut kauniita yksin Merjalle kukkia
+Pekka ei antanut kukkia Merjalle
+eiF Pekka antanut Merjalle kukkia
+Pekka ei antanut Merjalle kukkia
+Pekka ei ollut antanut Merjalle kukkia
+antaako Merja kukan
+antaako kukan Merja
+sad young Pekka mostly admires sad young Merja faintly
+Pekka joka MerjalleF kukkiaF osti
+Pekka joka osti Merjalle kukkia
+yksinkö Merja antaa kukan
+
+
+kenen hiuksia Pekka ihaili
 Pekka ihailee kukkaa jota ilman Merja ei pärjää
+Pekka jota Merja ei ihaile
+Pekka ihailee kukkaa jota Merja ihaili
 ilmanF kukkaa Merja ei pärjää
 Merja ei pärjää ilman kukkaa
 
-kenen hiuksia Pekka ihaili
 Pekka sanoi että se väite että teoria hylättiin kumoutui
 Pekka sanoi että se väite että teoria kumoutui hylättiin
 
@@ -27,30 +55,6 @@ Merja palasi suruissaan kotiin ilman jäätyään Jarin nimmaria
 kenen nimmaria ilman jäätyään Merja palasi suruissaan kotiin
 Merja palasi suruissaan kotiin jäätyään ilman Pekan nimmaria
 kenen nimmaria ilman jäätyään Merja palasi suruissaan kotiin
-ei ollut antanut Merjalle kukkia Pekka
-eiF ollut Pekka antanut Merjalle kukkia
-eikö Pekka ollut antanut Merjalle kukkia
-eiF Pekka ollut antanut Merjalle kukkia
-Pekka ei ollut antanut Merjalle kukkia
-antaako Merja kukan yksin
-Merja who he saw admiring him admires Pekka
-Merja who he saw admiring him
-Pekka saw Merja who he admires
-Pekka saw Merja who he admires admiring him
-Pekka ihailee Merjaa
-Pekka ei antanut Merjalle kauniita kukkia yksin
-Pekka ei antanut kauniita yksin kukkia Merjalle
-Pekka ei antanut kauniita yksin Merjalle kukkia
-Pekka ei antanut kukkia Merjalle
-eiF Pekka antanut Merjalle kukkia
-Pekka ei antanut Merjalle kukkia
-Pekka ei ollut antanut Merjalle kukkia
-antaako Merja kukan
-antaako kukan Merja
-sad young Pekka mostly admires sad young Merja faintly
-Pekka joka MerjalleF kukkiaF osti
-Pekka joka osti Merjalle kukkia
-yksinkö Merja antaa kukan
 sad young Pekka
 who he saw admiring him
 Pekka admires Merja who he saw admiring him

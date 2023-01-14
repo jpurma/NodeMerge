@@ -46,7 +46,7 @@ MerjalleF :: F =f moves, f N:lle
 hyvän :: a:acc|gen
 
 ei :: T neg =N:nom3sg, =v:inf|infO
-eiF :: F, =N:nom3sg moves, moves =v:inf|infO
+eiF :: F =N:nom3sg moves, =v:inf|infO
 eikö :: ko =neg, neg =N:nom3sg moves, =v:inf|infO moves
 
 ollut :: v:infO =v:inf
@@ -63,8 +63,8 @@ jonka :: rel:jo =T, moves N:acc
 joka :: rel:jo =C, moves N:nom3sg
 whom :: rel:wh =T, moves N:acc
 who :: Q rel:wh, =T, moves N:nom3sg|acc =Ting
-kenen :: Q rel:wh, =T, moves N:gen
-jota :: rel:jo, =T, moves N:prt
+kenen :: Q rel:wh, moves N:gen, =T
+jota :: rel:jo, moves N:prt, =T
 
 antaa :: T:a-inf =N:gen|nom3sg, v =N:acc|prt =N:lle =N:lla -a:v
 ihailla :: T:a-inf =N:gen -a:v, =N:prt =N:lla
@@ -77,7 +77,7 @@ does :: Q T:prees =DOES moves, DOES =N:nom3sg, =v
 admires :: T:prees =N:nom3sg -a:v, =N:acc -a:v
 ihailee :: T:prees =N:nom3sg -a:v, =N:prt
 ihailen :: T:prees =N:nom1sg -a:v, =N:prt
-ihaile :: T:prees v:inf -a:v, =N:prt
+ihaile :: v:inf -a:v, =N:prt
 
 pärjää :: T:prees v:inf =N:nom3sg -a:v, =N:ilman
 
