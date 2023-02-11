@@ -1,53 +1,71 @@
-#Pekka :: N:nom3sg -a:n =rel:wh|jo =Ting
-Pekka :: N:nom3sg|acc -a:n =rel:wh|jo =Ting
-#Merja :: N:nom3sg -a:n =rel:wh|jo
-Merja :: N:nom3sg|acc -a:n =rel:wh|jo =Ting
-väite :: N:nom3sg a:n -a:n, =rel:että
-teoria :: N:nom3sg a:n -a:n, =rel:että
+#Pekka :: N:nom3sg -a:n a:n =rel:wh|jo =Ting
+Pekka :: N:nom3sg|acc -a:a a:n, =rel:wh|jo =Ting
+#Merja :: N:nom3sg -a:a a:n =rel:wh|jo =Ting
+Merja :: N:nom3sg|acc -a:a a:n, =Ting =rel:wh|jo
+Minttu :: N:nom3sg|acc -a:a a:n, =Ting =rel:wh|jo
+väite :: N:nom3sg -a:a a:n , =rel:että
+teoria :: N:nom3sg -a:a a:n , =rel:että
 se :: N:nom3sg a:n
-sopimus :: N:nom3sg -a:D|a =T:a-inf
+sopimus :: N:nom3sg -a:D|a a:n =T:a-inf
 hän :: N:nom3sg
 he :: N:nom3sg
 
-Merjaa :: N:prt -a:D <N:gen a:n =rel:jo
-Minttua :: N:prt a:n
+#Merjaa :: N:prt  <N:gen -a:a a:n =rel:jo
+Minttua :: N:prt -a:a a:n
 sitä :: N:prt a:D|n
 him  :: N:acc
-kukkia :: N:prt -a:n-prt
-kukkaa :: N:prt -a:n-prt =rel:wh|jo
-kukkiaF :: F moves =f, f N:prt -a:n-prt
-nimmaria :: N:prt -a:n-prt =N:gen
-hiuksia :: N:prt =N:gen
+her :: N:acc
+kukkia :: N:prt -a:a-prt a:n
+kukkaa :: N:prt -a:a-prt a:n =rel:wh|jo
+kukkiaF :: F moves =f, f N:prt -a:a-prt a:n
+nimmaria :: N:prt -a:a-prt =N:gen a:n
+hiuksia :: N:prt =N:gen -a:a-prt a:n
 
 kotiin :: N:iin
+
+kaksi :: -a:nGenSg|nGenPl N:nom3sg a:numNomSg, -a:nPrtSg =rel
+kahta :: -a:nGenSg|nGenPl N:prtSg a:numPrtSg, -a:nPrtSg =rel
+nuorta :: -a:nGenSg|nGenPl a:aPrtSg|nPrtSg, =rel
+miestä :: -a:nGenSg|nGenPl a:nPrtSg -a:nPrtSg, =rel
+jahtasi :: T v =N:nom3sg, =N:prtSg|prtPl
+yhtä :: -a:nGenSg|nGenPl N:prtSg, -a:nPrtSg =rel
+Merjaa :: -a:nGenSg|nGenPl N:prtSg a:nPrtSg -a:prtSg, =rel
+yliopiston :: N:gen|acc -a:nGenSg|nGenPl a:nGenSg, =rel
+tähtien :: N:gen|acc -a:nGenSg|nGenPl a:nGenPl, =rel
+
+ja :: N:nom3pl -a a
 
 # Pekan :: N:acc|gen =N:prt|acc|nom3sg
 Pekan :: N:gen|gen
 Jarin :: N:gen|gen
-avaimen :: N:acc -a:acc|gen
-sopimuksen :: N:acc -a:acc|gen
-kukan :: N:acc -a:acc|gen
+avaimen :: N:acc -a:a-acc|a-gen a:n
+sopimuksen :: N:acc -a:a-acc|a-gen a:n
+kukan :: N:acc -a:a-acc|a-gen
+paidan :: N:acc -a:a-acc|a-gen a:n
+takin :: N:acc -a:a-acc|a-gen a:n
 
-kiihkeästi :: a:v
-faintly :: a:v
-mostly :: a:v
-yksin :: a:v|n
-suruissaan :: a:v
+kiihkeästi :: a:adv
+faintly :: a:adv
+mostly :: a:adv
+yksin :: a:adv|a
+suruissaan :: a:adv
 
-kauniita :: a:n-prt
+kauniita :: a:a-prt
 
-sad :: a:n -a:n
-big :: a:n -a:n
-young :: a:n -a:n
+sad :: a:a -a:a
+big :: a:n -a:a
+young :: a:a -a:a
+kaunis :: a:a -a:a
+nuori :: a:a -a:a
 
-Merjalle :: a:lle -a:n
+Merjalle :: a:n|lle -a:a
 MerjalleF :: F =f moves, f N:lle
 
 hyvän :: a:acc|gen
 
 ei :: T neg =N:nom3sg, =v:inf|infO
-eiF :: F =N:nom3sg moves, =v:inf|infO
-eikö :: ko =neg, neg =N:nom3sg moves, =v:inf|infO moves
+eiF :: F =neg, T neg =N:nom3sg moves, =v:inf|infO
+eikö :: ko =neg, T neg =N:nom3sg moves, =v:inf|infO
 
 ollut :: v:infO =v:inf
 
@@ -60,21 +78,21 @@ ilmanF :: moves F N:ilman =N:prt
 
 että :: rel:että, =T, N:nom3sg
 jonka :: rel:jo =T, moves N:acc
-joka :: rel:jo =C, moves N:nom3sg
-whom :: rel:wh =T, moves N:acc
-who :: Q rel:wh, =T, moves N:nom3sg|acc =Ting
+joka :: rel:jo =T, moves N:nom3sg
+whom :: rel:wh, moves N:acc =Ting, =T
+who :: Q rel:wh, moves N:nom3sg|acc =Ting, =T
 kenen :: Q rel:wh, moves N:gen, =T
 jota :: rel:jo, moves N:prt, =T
 
 antaa :: T:a-inf =N:gen|nom3sg, v =N:acc|prt =N:lle =N:lla -a:v
 ihailla :: T:a-inf =N:gen -a:v, =N:prt =N:lla
-admiring :: Ting, =N:acc
+admiring :: N:acc|nom3sg Ting, =N:acc
 
 admire :: v block, =N:acc
 
 did :: Q T:pst =DOES moves, DOES =N:nom3sg, =T:pst
 does :: Q T:prees =DOES moves, DOES =N:nom3sg, =v
-admires :: T:prees =N:nom3sg -a:v, =N:acc -a:v
+admires :: T:prees =N:nom3sg -a:v, =N:acc|Ting -a:v
 ihailee :: T:prees =N:nom3sg -a:v, =N:prt
 ihailen :: T:prees =N:nom1sg -a:v, =N:prt
 ihaile :: v:inf -a:v, =N:prt
@@ -94,6 +112,9 @@ näki :: =N:nom3sg T:pst, =N:prt|acc
 peruuntui :: T:pst -a:v, =N:nom3sg
 rakasti :: T:pst =N:nom3sg, =N:prt -a:v
 teki :: T:pst =N:nom3sg, =N:acc|prt
+löysi :: T:pst =N:nom3sg a:v, =N:acc|prt -a:n
 saw :: T:pst =N:nom3sg, =N:acc
-osti :: C T:pst =N:nom3sg, v =N:acc|prt, =N:lle -a:v
-palasi :: T:pst =N:nom3sg -a:v|v3sg, =N:iin -a:v|v3sg
+osti :: C T:pst =N:nom3sg a:v, v =N:acc|prt -a:n
+palasi :: T:pst =N:nom3sg a:v, =N:iin -a:n
+
+löysivät :: T:pst =N:nom3pl a:v -a:n, =N:acc

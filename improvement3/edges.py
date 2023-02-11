@@ -53,7 +53,7 @@ class Edge:
     def activate(self, n):
         if n not in self.activations:
             self.activations.append(n)
-            self.end.activate(n)
+            self.end.activate(n, source=self)
 
     @property
     def color(self):

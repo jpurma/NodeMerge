@@ -183,10 +183,10 @@ class Network(Widget):
             LexicalNode.add_merge(WordPart(head, head_signal), WordPart(arg, arg_signal))
 
     def add_adjunction(self, first_signal, second_signal):
-        first = self.find_by_signal(first_signal)
-        second = self.find_by_signal(second_signal)
-        if first and second:
-            LexicalNode.add_adjunction(WordPart(first, first_signal), WordPart(second, second_signal))
+        head = self.find_by_signal(first_signal)
+        adj = self.find_by_signal(second_signal)
+        if head and adj:
+            LexicalNode.add_adjunction(WordPart(head, first_signal), WordPart(adj, second_signal))
 
     def update_sentence(self, text=""):
         if not text:
@@ -216,6 +216,7 @@ class Network(Widget):
                 node.head_edges.clear()
                 node.arg_edges.clear()
                 node.adjunctions.clear()
+                node.adjunct_to.clear()
                 node.routes_down.clear()
                 node.route_edges.clear()
 

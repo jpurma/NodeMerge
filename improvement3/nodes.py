@@ -35,7 +35,7 @@ class Node:
         if edge not in other.edges_in:
             other.edges_in.append(edge)
 
-    def activate(self, n):
+    def activate(self, n, source=None):
         if n not in self.activations:
             self.activations.append(n)
             self.active = True
@@ -94,6 +94,7 @@ class LexicalNode(Node):
         self.arg_edges = []
         self.head_edges = []
         self.adjunctions = []
+        self.adjunct_to = []
         self.routes_down = []
         self.route_edges = []
         self.lex_parts = lex_parts
@@ -104,7 +105,7 @@ class LexicalNode(Node):
             self.connect(c_node)
             c_node.connect(self)
 
-    def activate(self, n):
+    def activate(self, n, source=None):
         if n not in self.activations:
             self.activations.append(n)
             if self.activations:
@@ -167,14 +168,14 @@ class LexicalNode(Node):
         return self.has_mover_feature()
 
     @staticmethod
-    def add_adjunction(first, second):
-        if (find_edge(first.li.adjunctions, start=second, end=first)
-           or find_edge(second.li.adjunctions, start=first, end=second)):
+    def add_adjunction(head, adj):
+        if (find_edge(head.li.adjunctions, start=head, end=adj)
+           or find_edge(adj.li.adjunct_to, start=head, end=adj)):
             print('  Nodes: exists already')
             return
-        edge = AdjunctEdge(first, second)
-        #first.li.adjunctions.append(edge)
-        second.li.adjunctions.append(edge)
+        edge = AdjunctEdge(adj, head)
+        head.li.adjunctions.append(edge)
+        adj.li.adjunct_to.append(edge)
 
     @staticmethod
     def add_merge(head, arg):
@@ -193,6 +194,8 @@ class FeatureNode(Node):
         self.values = []
 
     def values_match(self, other):
+        if not (self.values and other.values):
+            return True
         for f in self.values:
             if f in other.values:
                 return f
@@ -216,12 +219,13 @@ class PosFeatureNode(FeatureNode):
         assert fstring not in ctrl.features
         ctrl.features[fstring] = self
 
-    def activate(self, n):
+    def activate(self, n, source=None):
         if n not in self.activations:
             self.activations.append(n)
             for out in self.edges_out:
                 out.activate(n)
             self.active = True
+
         if not self.activations:
             self.active = False
 
@@ -241,46 +245,41 @@ class NegFeatureNode(FeatureNode):
             self.name = name_string
             self.values = []
         assert fstring not in ctrl.features
+        self.lex_activations = []
+        self.feat_activations = []
         ctrl.features[fstring] = self
 
     def connect_positive(self):
         for feat in ctrl.features.values():
-            if feat.name == self.name and not feat.sign and feat is not self and ((not self.values) or feat.values_match(self)):
-               #print('connect feats ', self, '+', feat)
+            if feat.name == self.name \
+                    and not feat.sign \
+                    and feat is not self \
+                    and feat.values_match(self):
                feat.connect(self)
 
-    def activate(self, n):
+    def activate(self, n, source=None):
+        if not self.activations:
+            self.lex_activations = []
+            self.feat_activations = []
+            self.active = False
         if n not in self.activations:
             self.activations.append(n)
-            lex_activations = []
-            feat_activations = []
-            self.active = False
-            for e in self.edges_in:
-                # use activation from active lexical item, not that of supporting feature
-                if isinstance(e.start, (LexicalNode, CategoryNode)) and e.activations:
-                    for signal in e.activations:
-                        if signal not in lex_activations:
-                            print('  Nodes: receiving lex activation ', e.start, ' for ', self)
-                            lex_activations.append(signal)
-                elif e.activations:
-                    for signal in e.activations:
-                        for lex_activation_signal in lex_activations:
-                            if signal != lex_activation_signal or self.sign == '-':
-                                feat_activations.append(signal)
-                                print('  Nodes: feat activations at ', self, feat_activations)
-                                break
-            if lex_activations and feat_activations:
-                for head_signal in lex_activations:
-                    for arg_signal in feat_activations:
-                        if head_signal != arg_signal:
+        if source:
+            if isinstance(source.start, (LexicalNode, CategoryNode)):
+                if n not in self.lex_activations:
+                    self.lex_activations.append(n)
+                    for arg_signal in self.feat_activations:
+                        for out in self.edges_out:
+                            out.activate((n, arg_signal))
+                        self.active = True
+            else:
+                if n not in self.feat_activations:
+                    if self.sign == '-' or n not in self.lex_activations:
+                        self.feat_activations.append(n)
+                        for head_signal in self.lex_activations:
                             for out in self.edges_out:
-                                if self.sign == '-':
-                                    print('  Nodes: activating edge out from ', self, (head_signal, arg_signal),
-                                          'existing activations: ', out.activations)
-                                out.activate((head_signal, arg_signal))
-                self.active = True
-        if not self.activations:
-            self.active = False
+                                out.activate((head_signal, n))
+                            self.active = True
 
     def activated_at(self, signal):
         if not self.active:
@@ -299,7 +298,7 @@ class CategoryNode(Node):
         self.category = category
         ctrl.categories.append(self)
 
-    def activate(self, n):
+    def activate(self, n, source=None):
         if n not in self.activations:
             self.activations.append(n)
         self.active = bool(self.activations)
@@ -310,7 +309,7 @@ class MergeNode(Node):
 
 
 class SymmetricMergeNode(MergeNode):
-    def activate(self, n):
+    def activate(self, n, source=None):
         right_signal = ctrl.words.current_item.signal
         accepted_signals = []
         for e in self.edges_in:
@@ -377,7 +376,7 @@ class SymmetricMergeNode(MergeNode):
 
 
 class SymmetricPairMergeNode(MergeNode):
-    def activate(self, n):
+    def activate(self, n, source=None):
         right_signal = ctrl.words.current_item.signal
         accepted_signals = []
         for e in self.edges_in:
@@ -428,7 +427,7 @@ class SymmetricPairMergeNode(MergeNode):
 
 
 class MergeOkNode(Node):
-    def activate(self, n):
+    def activate(self, n, source=None):
         if n not in self.activations:
             self.activations.append(n)
         self.active = bool(self.activations)
