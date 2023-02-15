@@ -340,7 +340,7 @@ class Route:
                 new_combination.add_route_edges()
                 print('append route: ', new_combination)
                 self.wp.li.routes_down.append(new_combination)
-        new_combination.walk_all_routes_up(wp_list)
+                new_combination.walk_all_routes_up(wp_list)
 
     def walk_all_routes_up(self, wp_list):
 

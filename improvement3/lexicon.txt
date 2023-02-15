@@ -86,7 +86,7 @@ jota :: rel:jo, moves N:prt, =T
 
 antaa :: T:a-inf =N:gen|nom3sg, v =N:acc|prt =N:lle =N:lla -a:v
 ihailla :: T:a-inf =N:gen -a:v, =N:prt =N:lla
-admiring :: N:acc|nom3sg Ting, =N:acc
+admiring :: N:acc|nom3sg|Ting, =N:acc
 
 admire :: v block, =N:acc
 
@@ -117,4 +117,4 @@ saw :: T:pst =N:nom3sg, =N:acc
 osti :: C T:pst =N:nom3sg a:v, v =N:acc|prt -a:n
 palasi :: T:pst =N:nom3sg a:v, =N:iin -a:n
 
-löysivät :: T:pst =N:nom3pl a:v -a:n, =N:acc
+löysivät :: T:pst =N:nom3pl a:v, =N:acc -a:n

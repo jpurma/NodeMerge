@@ -238,9 +238,12 @@ class Network(Widget):
         print()
         print(f'*** Handling {self.words.current_item} ***')
         Route(wp=self.words.current_item).walk_all_routes_up(self.words)
-        for wp in reversed(self.words.word_parts[:-1]):
+        for wp in self.words.word_parts[:-1]:
             print()
             print(f' *** Revisiting {wp} ***')
+            for route in wp.li.routes_down:
+                if route.wp is wp:
+                    route.walk_all_routes_up(self.words)
             Route(wp=wp).walk_all_routes_up(self.words)
         if self.words.is_last():
             print('****************************************')
@@ -370,13 +373,16 @@ class Network(Widget):
         self.update_canvas()
 
     def show_current_routes(self):
+        c = 0
         for word_part in self.words.word_parts:
             indent = ' ' * word_part.signal
             print(f'{indent}*** routes down from {word_part}: ({len(word_part.li.routes_down)})')
             for route in word_part.li.routes_down:
+                c += 1
                 if route.wp is not word_part:
                     continue
                 print(f'{indent}{route.print_route()}')
+        print('routes total at this point: ', c)
 
     def pick_optimal_route(self):
         total_routes = 0
