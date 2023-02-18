@@ -23,13 +23,13 @@ hiuksia :: N:prt =N:gen -a:a-prt a:n
 
 kotiin :: N:iin
 
-kaksi :: -a:nGenSg|nGenPl N:nom3sg a:numNomSg, -a:nPrtSg =rel
-kahta :: -a:nGenSg|nGenPl N:prtSg a:numPrtSg, -a:nPrtSg =rel
-nuorta :: -a:nGenSg|nGenPl a:aPrtSg|nPrtSg, =rel
-miestä :: -a:nGenSg|nGenPl a:nPrtSg -a:nPrtSg, =rel
+kaksi :: -a:nGenSg|nGenPl N:nom3sg a:numNomSg, =N:prtSg =rel
+kahta :: -a:nGenSg|nGenPl N:prtSg a:numPrtSg, =N:prtSg =rel
+nuorta :: -a:nGenSg|nGenPl N:prtSg a:aPrtSg|nPrtSg, =rel
+miestä :: -a:nGenSg|nGenPl N:prtSg -a:nPrtSg, =rel
 jahtasi :: T v =N:nom3sg, =N:prtSg|prtPl
-yhtä :: -a:nGenSg|nGenPl N:prtSg, -a:nPrtSg =rel
-Merjaa :: -a:nGenSg|nGenPl N:prtSg a:nPrtSg -a:prtSg, =rel
+yhtä :: -a:nGenSg|nGenPl N:prtSg, =N:prtSg =rel
+Merjaa :: -a:nGenSg|nGenPl N:prtSg -a:nPrtSg -a:prtSg, =rel
 yliopiston :: N:gen|acc -a:nGenSg|nGenPl a:nGenSg, =rel
 tähtien :: N:gen|acc -a:nGenSg|nGenPl a:nGenPl, =rel
 
@@ -112,9 +112,10 @@ näki :: =N:nom3sg T:pst, =N:prt|acc
 peruuntui :: T:pst -a:v, =N:nom3sg
 rakasti :: T:pst =N:nom3sg, =N:prt -a:v
 teki :: T:pst =N:nom3sg, =N:acc|prt
-löysi :: T:pst =N:nom3sg a:v, =N:acc|prt -a:n
+löysi :: T:pst =N:nom3sg a:v, =N:acc|prt -sem:n
 saw :: T:pst =N:nom3sg, =N:acc
-osti :: C T:pst =N:nom3sg a:v, v =N:acc|prt -a:n
-palasi :: T:pst =N:nom3sg a:v, =N:iin -a:n
+osti :: C T:pst =N:nom3sg a:v, v =N:acc|prt -sem:n
+palasi :: T:pst =N:nom3sg a:v, =N:iin -sem:n
 
-löysivät :: T:pst =N:nom3pl a:v, =N:acc -a:n
+löysivät :: T:pst =N:nom3pl a:v, =N:acc -sem:n
+ostivat :: T:pst =N:nom3pl a:v, =N:acc -sem:n

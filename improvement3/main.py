@@ -396,21 +396,27 @@ class Network(Widget):
                 if route.wp is not word_part:
                     continue
                 total_routes += 1
-                # print(route)
-                print(f'{indent}{route.print_route()}')
+                print(f'{indent}{route.cost} {route.print_route()}')
                 if len(route.signals) == len(self.words.word_parts):
                     good_route = route.tree()
-                    good_routes.append(good_route)
-                    good_routes.append("")
-                    print(good_route)
+                    if (route.cost, route) not in good_routes:
+                        good_routes.append((route.cost, route))
+                    print(route.cost, good_route)
+
             print(f'{indent} routes len: {len(word_part.li.routes_down)}, route set len: {len(set_routes)}')
 
         if good_routes:
-            if self.send(json.dumps(good_routes)):
-                print(f'sent {int(len(good_routes) / 2)} good routes to kataja ('
-                      f'{len(json.dumps(list(reversed(good_routes))))})')
+            good_route_strs = []
+            for cost, route in sorted(good_routes):
+                good_route = route.tree()
+                good_route_strs.append(good_route)
+                good_route_strs.append("")
+                print(cost, route)
+
+            if self.send(json.dumps(good_route_strs)):
+                print(f'sent {len(good_routes)} good routes to kataja')
             else:
-                print(f'found {int(len(good_routes) / 2)} good routes')
+                print(f'found {len(good_routes)} good routes')
         print('total routes: ', total_routes)
 
     def add_route_edge(self, start, end, origin):
