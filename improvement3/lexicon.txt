@@ -32,6 +32,7 @@ yhtä :: -a:nGenSg|nGenPl N:prtSg, =N:prtSg =rel
 Merjaa :: -a:nGenSg|nGenPl N:prtSg -a:nPrtSg -a:prtSg, =rel
 yliopiston :: N:gen|acc -a:nGenSg|nGenPl a:nGenSg, =rel
 tähtien :: N:gen|acc -a:nGenSg|nGenPl a:nGenPl, =rel
+paitaa :: -a:nGenSg|nGenPl N:prtSg -a:nPrtSg -a:prtSg, =rel
 
 ja :: N:nom3pl -a a
 
@@ -79,10 +80,11 @@ ilmanF :: moves F N:ilman =N:prt
 että :: rel:että, =T, N:nom3sg
 jonka :: rel:jo =T, moves N:acc
 joka :: rel:jo =T, moves N:nom3sg
-whom :: rel:wh, moves N:acc =Ting, =T
-who :: Q rel:wh, moves N:nom3sg|acc =Ting, =T
-kenen :: Q rel:wh, moves N:gen, =T
+whom :: rel:wh =T, moves N:acc =Ting
+who :: Q rel:wh =T, moves N:nom3sg|acc =Ting
+kenen :: Q rel:wh =T, moves N:gen a:nGenSg
 jota :: rel:jo, moves N:prt, =T
+ketä :: Q rel:wh =T, moves N:prt =N:prtSg
 
 antaa :: T:a-inf =N:gen|nom3sg, v =N:acc|prt =N:lle =N:lla -a:v
 ihailla :: T:a-inf =N:gen -a:v, =N:prt =N:lla
@@ -93,7 +95,7 @@ admire :: v block, =N:acc
 did :: Q T:pst =DOES moves, DOES =N:nom3sg, =T:pst
 does :: Q T:prees =DOES moves, DOES =N:nom3sg, =v
 admires :: T:prees =N:nom3sg -a:v, =N:acc|Ting -a:v
-ihailee :: T:prees =N:nom3sg -a:v, =N:prt
+ihailee :: T:prees =N:nom3sg -a:v, =N:prt|prtSg|prtPl
 ihailen :: T:prees =N:nom1sg -a:v, =N:prt
 ihaile :: v:inf -a:v, =N:prt
 

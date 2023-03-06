@@ -9,7 +9,8 @@ from kivy.core.window import Window
 
 from improvement3.edges import RouteEdge
 from nodes import *
-from word_parts import WordPart, WordPartList, Route
+from word_parts import WordPart, WordPartList
+from route import Route
 
 N_SIZE = 3
 WIDTH = 1600
@@ -57,6 +58,7 @@ class Network(Widget):
         self.route_mode_button.y = 10
         self.add_widget(self.route_mode_button)
         self.route_mode_button.on_press = self.toggle_route_mode
+        self.counter = 0
 
         keyboard = Window.request_keyboard(self.handle_keyup, self)
         keyboard.bind(on_key_up=self.handle_keyup)
@@ -207,6 +209,7 @@ class Network(Widget):
 
     def reset(self):
         self.words.reset()
+        self.counter = 0
         for edge in list(self.edges.values()):
             if isinstance(edge, (MergeEdge, AdjunctEdge, RouteEdge)):
                 del self.edges[edge.id]
@@ -223,6 +226,8 @@ class Network(Widget):
     def next_word(self):
         if not self.words:
             return
+        if self.words.current_item.signal == 1:
+            Route(None, wp=self.words.current_item).walk_all_routes_up()
         if self.words.pick_next():
             self.update_sentence(' '.join([wp.li.id for wp in self.words.word_parts]))
         else:
@@ -237,14 +242,15 @@ class Network(Widget):
             self.activate_current_words()
         print()
         print(f'*** Handling {self.words.current_item} ***')
-        Route(wp=self.words.current_item).walk_all_routes_up(self.words)
+        Route(None, wp=self.words.current_item).walk_all_routes_up()
         for wp in self.words.word_parts[:-1]:
             print()
             print(f' *** Revisiting {wp} ***')
+            print(f' routes to walk: {wp.li.routes_down}')
             for route in wp.li.routes_down:
                 if route.wp is wp:
-                    route.walk_all_routes_up(self.words)
-            Route(wp=wp).walk_all_routes_up(self.words)
+                    route.walk_all_routes_up()
+            Route(None, wp=wp).walk_all_routes_up()
         if self.words.is_last():
             print('****************************************')
             print('*                                      *')
@@ -381,13 +387,14 @@ class Network(Widget):
                 c += 1
                 if route.wp is not word_part:
                     continue
-                print(f'{indent}{route.print_route()}')
+                print(f'{indent}{route.print_route()} {route.route_signal.low}-{route.route_signal.high}, '
+                      f'{route.route_signal.movers}')
         print('routes total at this point: ', c)
 
     def pick_optimal_route(self):
         total_routes = 0
         good_routes = []
-        for word_part in reversed(self.words.word_parts):
+        for word_part in self.words.word_parts:
             indent = ' ' * word_part.signal
             print(f'{indent}*** routes down from {word_part}: ({len(word_part.li.routes_down)})')
             set_routes = set()
@@ -396,12 +403,14 @@ class Network(Widget):
                 if route.wp is not word_part:
                     continue
                 total_routes += 1
-                print(f'{indent}{route.cost} {route.print_route()}')
-                if len(route.signals) == len(self.words.word_parts):
+                print(f'{indent} {route.print_route()} {route.route_signal.low}-{route.route_signal.high}, '
+                      f'{route.route_signal.movers} c: {route.cost}')
+
+                if len(route.signals) == len(self.words.word_parts) and not route.route_signal.movers:
                     good_route = route.tree()
                     if (route.cost, route) not in good_routes:
                         good_routes.append((route.cost, route))
-                    print(route.cost, good_route)
+                    print(good_route, route.cost)
 
             print(f'{indent} routes len: {len(word_part.li.routes_down)}, route set len: {len(set_routes)}')
 

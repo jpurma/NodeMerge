@@ -101,7 +101,8 @@ class LexEdge(Edge):
         return LexEdge.get(start, end) or __class__(start, end)
 
     def activate(self, n):
-        pass
+        self.activations.append(n)
+        # Tämä ei aktivoi kohdesanaansa
 
 
 class MergeEdge:
