@@ -10,7 +10,7 @@ from kivy.core.window import Window
 from improvement3.edges import RouteEdge
 from nodes import *
 from word_parts import WordPart, WordPartList
-from route import Route
+from route import Route, COMPLETE_ROUTES
 
 N_SIZE = 3
 WIDTH = 1600
@@ -227,7 +227,8 @@ class Network(Widget):
         if not self.words:
             return
         if self.words.current_item.signal == 1:
-            Route(None, wp=self.words.current_item).walk_all_routes_up()
+            leaf_constituent = Route(None, wp=self.words.current_item)
+            leaf_constituent.wp.li.routes_down.append(leaf_constituent)
         if self.words.pick_next():
             self.update_sentence(' '.join([wp.li.id for wp in self.words.word_parts]))
         else:
@@ -242,7 +243,9 @@ class Network(Widget):
             self.activate_current_words()
         print()
         print(f'*** Handling {self.words.current_item} ***')
-        Route(None, wp=self.words.current_item).walk_all_routes_up()
+        leaf_constituent = Route(None, wp=self.words.current_item)
+        leaf_constituent.wp.li.routes_down.append(leaf_constituent)
+        leaf_constituent.walk_all_routes_up()
         for wp in self.words.word_parts[:-1]:
             print()
             print(f' *** Revisiting {wp} ***')
@@ -250,6 +253,8 @@ class Network(Widget):
             for route in wp.li.routes_down:
                 if route.wp is wp:
                     route.walk_all_routes_up()
+                    if not COMPLETE_ROUTES:
+                        break
             Route(None, wp=wp).walk_all_routes_up()
         if self.words.is_last():
             print('****************************************')
@@ -397,22 +402,21 @@ class Network(Widget):
         for word_part in self.words.word_parts:
             indent = ' ' * word_part.signal
             print(f'{indent}*** routes down from {word_part}: ({len(word_part.li.routes_down)})')
-            set_routes = set()
             for route in word_part.li.routes_down:
-                set_routes.add(frozenset(route.signals))
                 if route.wp is not word_part:
                     continue
                 total_routes += 1
                 print(f'{indent} {route.print_route()} {route.route_signal.low}-{route.route_signal.high}, '
-                      f'{route.route_signal.movers} c: {route.cost}')
+                      f'{route.route_signal.movers} wp: {route.wp} c: {route.cost}, len: {len(route)}')
 
-                if len(route.signals) == len(self.words.word_parts) and not route.route_signal.movers:
+                if route.route_signal.low == 1 and route.route_signal.high == len(self.words.word_parts) and \
+                        not route.route_signal.movers:
                     good_route = route.tree()
                     if (route.cost, route) not in good_routes:
                         good_routes.append((route.cost, route))
                     print(good_route, route.cost)
 
-            print(f'{indent} routes len: {len(word_part.li.routes_down)}, route set len: {len(set_routes)}')
+            print(f'{indent} routes len: {len(word_part.li.routes_down)}')
 
         if good_routes:
             good_route_strs = []

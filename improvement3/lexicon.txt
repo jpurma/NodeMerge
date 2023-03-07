@@ -23,16 +23,16 @@ hiuksia :: N:prt =N:gen -a:a-prt a:n
 
 kotiin :: N:iin
 
-kaksi :: -a:nGenSg|nGenPl N:nom3sg a:numNomSg, =N:prtSg =rel
-kahta :: -a:nGenSg|nGenPl N:prtSg a:numPrtSg, =N:prtSg =rel
-nuorta :: -a:nGenSg|nGenPl N:prtSg a:aPrtSg|nPrtSg, =rel
-miestä :: -a:nGenSg|nGenPl N:prtSg -a:nPrtSg, =rel
+kaksi :: -ag:nGenSg|nGenPl N:nom3sg a:numNomSg, =N:prtSg =rel
+kahta :: -ag:nGenSg|nGenPl N:prtSg a:numPrtSg, =N:prtSg =rel
+nuorta :: -ag:nGenSg|nGenPl N:prtSg a:aPrtSg|nPrtSg, =rel
+miestä :: -ag:nGenSg|nGenPl N:prtSg -a:nPrtSg, =rel
 jahtasi :: T v =N:nom3sg, =N:prtSg|prtPl
-yhtä :: -a:nGenSg|nGenPl N:prtSg, =N:prtSg =rel
-Merjaa :: -a:nGenSg|nGenPl N:prtSg -a:nPrtSg -a:prtSg, =rel
-yliopiston :: N:gen|acc -a:nGenSg|nGenPl a:nGenSg, =rel
-tähtien :: N:gen|acc -a:nGenSg|nGenPl a:nGenPl, =rel
-paitaa :: -a:nGenSg|nGenPl N:prtSg -a:nPrtSg -a:prtSg, =rel
+yhtä :: -ag:nGenSg|nGenPl N:prtSg, =N:prtSg =rel
+Merjaa :: -ag:nGenSg|nGenPl N:prtSg -a:nPrtSg -a:prtSg, =rel
+yliopiston :: N:gen|acc ag:nGenSg -ag:nGenSg|nGenPl, =rel
+tähtien :: N:gen|acc -ag:nGenSg|nGenPl ag:nGenPl, =rel
+paitaa :: -ag:nGenSg|nGenPl N:prtSg -a:nPrtSg -a:prtSg, =rel
 
 ja :: N:nom3pl -a a
 
@@ -88,7 +88,7 @@ ketä :: Q rel:wh =T, moves N:prt =N:prtSg
 
 antaa :: T:a-inf =N:gen|nom3sg, v =N:acc|prt =N:lle =N:lla -a:v
 ihailla :: T:a-inf =N:gen -a:v, =N:prt =N:lla
-admiring :: N:acc|nom3sg|Ting, =N:acc
+admiring :: =N:nom3sg N:acc|nom3sg|Ting, =N:acc
 
 admire :: v block, =N:acc
 

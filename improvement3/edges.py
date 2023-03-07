@@ -37,7 +37,7 @@ class Edge:
         with ctrl.g.canvas:
             Color(*self.color)
             Line(points=[self.start.x, self.start.y, self.end.x, self.end.y], width=1)
-            Line(circle=[cx, cy, 3], width=2)
+            Line(circle=[cx, cy, 5], width=3)
             x_diff = 0
             y_diff = 0
             for activation in self.activations:
@@ -46,7 +46,7 @@ class Edge:
                 for signal in activation:
                     Color(hue(signal), 0.8, 0.5, mode='hsv')
                     Line(points=[self.start.x + x_diff, self.start.y + y_diff, self.end.x + x_diff, self.end.y + y_diff], width=2)
-                    Line(circle=[cx, cy, 3], width=2)
+                    Line(circle=[cx, cy, 5], width=3)
                     x_diff += 2
                 x_diff += 2
 
@@ -88,7 +88,7 @@ class RouteEdge(Edge):
         with ctrl.g.canvas:
             Color(hue(self.origin), 0.8, 0.5, mode='hsv')
             Line(points=[self.start.x + dx, self.start.y + dy, self.end.x + ex, self.end.y + ey], width=2)
-            Line(circle=[cx, cy, 3], width=2)
+            Line(circle=[cx, cy, 5], width=3)
 
     @staticmethod
     def exists(start, end, origin):

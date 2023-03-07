@@ -42,14 +42,11 @@ class RouteSignal:
             self.used_movers = set()
         if part:
             print('     rs: adding part ', part, part.route_signal, ' to ', route.parent, self)
-            #if part.wp.signal not in part.route_signal.movers: # and part.wp.signal not in self.movers:
             self.movers |= part.route_signal.movers
             self.used_movers |= part.route_signal.used_movers
-            #assert not self.movers & self.used_movers
             self.high = part.route_signal.high
         if arg:
             print('     rs: adding argument ', arg, arg.route_signal, ' to ', route.parent, self)
-            #self.movers = self.movers.symmetric_difference(arg.movers)
             if self.movers or arg.route_signal.movers:
                 print(' rs: arg w. mover:', self.movers, arg.route_signal.movers, arg.wp, route.wp)
             self.movers -= arg.route_signal.used_movers
@@ -68,7 +65,7 @@ class RouteSignal:
             print('     rs: adding adjunct ', adjunct, adjunct.route_signal, ' to ', route.parent, self)
             self.low = min(self.low, adjunct.route_signal.low)
             self.high = max(self.high, adjunct.route_signal.high)
-            if adjunct.movers:
+            if adjunct.route_signal.movers:
                 self.movers.add(route.wp.signal)
                 print('     rs: adding ', route.wp.signal, ' to movers', self.movers)
         print('rs result: ', self)
