@@ -1,3 +1,7 @@
+testi :: X, =Z, =Y
+y :: Y
+z :: Z
+
 #Pekka :: N:nom3sg -a:n a:n =rel:wh|jo =Ting
 Pekka :: N:nom3sg|acc -a:a a:n, =rel:wh|jo =Ting
 #Merja :: N:nom3sg -a:a a:n =rel:wh|jo =Ting

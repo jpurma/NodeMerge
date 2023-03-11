@@ -392,8 +392,8 @@ class Network(Widget):
                 c += 1
                 if route.wp is not word_part:
                     continue
-                print(f'{indent}{route.print_route()} {route.route_signal.low}-{route.route_signal.high}, '
-                      f'{route.route_signal.movers}')
+                print(f'{indent}{route.print_route()} {route.rs.low}-{route.rs.high}, '
+                      f'movers: {route.rs.movers} used:{route.rs.used_movers} w:{route.weight}')
         print('routes total at this point: ', c)
 
     def pick_optimal_route(self):
@@ -406,25 +406,24 @@ class Network(Widget):
                 if route.wp is not word_part:
                     continue
                 total_routes += 1
-                print(f'{indent} {route.print_route()} {route.route_signal.low}-{route.route_signal.high}, '
-                      f'{route.route_signal.movers} wp: {route.wp} c: {route.cost}, len: {len(route)}')
+                print(f'{indent} {route.print_route()} {route.rs.low}-{route.rs.high}, '
+                      f'{route.rs.movers} wp: {route.wp}, len: {len(route)}, '
+                      f'used_movers: {route.rs.used_movers}, weight: {route.weight}')
 
-                if route.route_signal.low == 1 and route.route_signal.high == len(self.words.word_parts) and \
-                        not route.route_signal.movers:
-                    good_route = route.tree()
-                    if (route.cost, route) not in good_routes:
-                        good_routes.append((route.cost, route))
-                    print(good_route, route.cost)
+                if route.rs.low == 1 and route.rs.high == len(self.words.word_parts) and not route.rs.movers:
+                    if route not in good_routes:
+                        good_routes.append(route)
+                    print(route.tree())
 
             print(f'{indent} routes len: {len(word_part.li.routes_down)}')
 
         if good_routes:
             good_route_strs = []
-            for cost, route in sorted(good_routes):
+            for route in good_routes:
                 good_route = route.tree()
                 good_route_strs.append(good_route)
                 good_route_strs.append("")
-                print(cost, route)
+                print(route, route.weight)
 
             if self.send(json.dumps(good_route_strs)):
                 print(f'sent {len(good_routes)} good routes to kataja')
@@ -449,17 +448,4 @@ class NetworkApp(App):
 
 if __name__ == '__main__':
     NetworkApp().run()
-
-
-# [.Merjaa Merjaa [.jonka jonka [.näki [.näki Pekka näki] [.näki' jonka' näki']]]]
-
-# missä mielessä se on paras yhdistelmä?
-
-# Lause on 'Merjaa jonka Pekka näki', tai "Merjaa jonka jonka' Pekka näki näki'". Tuossa on enemmän siirtymiä kuin
-# sellaisissa joissa 'jonka' ei asetu näki -argumentiksi. Yksi tapa olisi laskea kattavuus sen perusteella kuinka
-# monta  elementtiä on argumentteina. Siinä tulee todennäköisesti ongelmia siinä että joku sana voidaan siirtää
-# jonnekin absurdiin paikkaan argumentiksi suurin kustannuksin ja sellainen lause tulkitaan paremmaksi kuin sellainen
-# jossa ei ole siirretty. Myös pitää katsoa onko tuossa todella sattunut kallista siirtymää, nyt hinnaksi lasketaan
-# 2,4. Jotenkin pitäisi päätyä siihen että jos sana koostuu monesta elementistä, sen ohi hyppääminen ei silti ole
-# kuin yksi askel. Koitetaan aluksi korjata sitä.
 
