@@ -67,6 +67,9 @@ class RouteSignal:
             return False
         return self.high == other.low - 1
 
+    def same_scope(self, other):
+        return self.low == other.low and self.high == other.high and self.movers == other.movers and self.used_movers == other.used_movers
+
     def routes_overlap(self, other):
         if not other:
             return False

@@ -41,7 +41,6 @@ class Route:
             self.adjuncts.append(adjunct)
             self.size += adjunct.size
         self.weight = 0
-        # Kokeillaan naapureiden laskemista reittiä tehdessä
         self.rs = RouteSignal(self, part and part.rs, arg and arg.rs, adjunct and adjunct.rs)
 
     def __eq__(self, other):
@@ -81,9 +80,9 @@ class Route:
         if self.adjuncts:
             for adjunct in self.adjuncts:
                 if self.wp.signal < adjunct.wp.signal:
-                    this = f"({this}+{adjunct})"
+                    this = f"({this}<+{adjunct})"
                 else:
-                    this = f"({adjunct}+{this})"
+                    this = f"({adjunct}+>{this})"
         if self.arg:
             if self.wp.signal < self.arg.wp.signal:
                 this = f"({this}<-{self.arg})"
@@ -99,9 +98,9 @@ class Route:
             for other_adjunct in adjunct.adjuncts:
                 adjunct_labels = _build_label(other_adjunct)
                 if adjunct.wp.signal < other_adjunct.wp.signal:
-                    a_label += '+' + adjunct_labels
+                    a_label += '<+' + adjunct_labels
                 else:
-                    a_label = adjunct_labels + '+' + a_label
+                    a_label = adjunct_labels + '+>' + a_label
             return a_label
 
         label = str(self.wp)
@@ -111,10 +110,10 @@ class Route:
         if self.adjuncts:
             for adjunct in self.adjuncts:
                 if self.wp.signal < adjunct.wp.signal:
-                    label = f"{label}+{_build_label(adjunct)}"
+                    label = f"{label}<+{_build_label(adjunct)}"
                     this = f"[.{label} {this} {adjunct.tree()}]"
                 else:
-                    label = f"{_build_label(adjunct)}+{label}"
+                    label = f"{_build_label(adjunct)}+>{label}"
                     this = f"[.{label} {adjunct.tree()} {this}]"
         if self.arg:
             if self.wp.signal < self.arg.wp.signal and not self.wp.li.is_free_to_move():
@@ -163,7 +162,7 @@ class Route:
             elif other_route.rs.is_lower_neighbor_due_movement_for(self.rs):
                 new_combination = Route(self, arg=other_route)
         elif type == ADJUNCTION:
-            if other_route.rs.are_neighbors(self.rs) or other_route.rs.is_lower_neighbor_due_movement_for(self.rs):
+            if other_route.rs.are_neighbors(self.rs):
                 new_combination = Route(self, adjunct=other_route)
         elif type == PART:
             if self.part:
@@ -175,6 +174,10 @@ class Route:
         for combination in self.wp.li.routes_down:
             if combination == new_combination:
                 old_combination = combination
+                break
+            elif combination.rs.same_scope(new_combination.rs):
+                old_combination = combination
+                break
         if old_combination:
             old_combination.weight += 1
             old_combination.walk_all_routes_up()
@@ -192,7 +195,7 @@ class Route:
         ctrl.g.counter += 1
         print(f'------ {ctrl.g.counter} ------')
         print(f' {self.sg}: walking all routes up from: ', self)
-        for edge in reversed(self.wp.li.head_edges):
+        for edge in self.wp.li.head_edges:
             for other_route in edge.head.li.routes_down:
                 if edge.head == other_route.wp:
                     other_route.add_new_route(self, ARGUMENT)
@@ -206,6 +209,8 @@ class Route:
                         other_route.add_new_route(self, PART)
 
         for edge in self.wp.li.adjunct_to:
+            if edge.start != self.wp:
+                continue
             other = edge.end
             if self.rs.low <= other.signal <= self.rs.high:
                 continue
@@ -213,7 +218,7 @@ class Route:
                 if other == other_route.wp:
                     other_route.add_new_route(self, ADJUNCTION)
 
-        for edge in reversed(self.wp.li.head_edges):
+        for edge in self.wp.li.head_edges:
             for other_route in edge.head.li.routes_down:
                 if edge.head == other_route.wp:
                     other_route.add_new_route(self, LONG_DISTANCE_ARGUMENT)

@@ -1,3 +1,12 @@
+kenen paitaa Pekka ihailee
+
+Minttu ja kaunis ja nuori Merja löysivät sopimuksen
+Minttu ja Merja löysivät sopimuksen
+Pekka osti paidan jaV Merja osti takin
+Pekka ja Merja Minttu löysivät sopimuksen
+Minttu ja Merja löysivät sopimuksen ostivat paidan jaV ostivat takin
+Minttu ja Merja löysivät sopimuksen Pekka osti paidan jaV Merja osti takin
+
 Merja who admires Pekka
 Merja who he saw admiring him
 Merja who admires admiring him likes Pekka
@@ -15,15 +24,12 @@ Merja admires him
 Pekka who admires her saw Merja
 Pekka saw Merja who he admires
 Pekka saw Merja whom he admires admiring him
-kenen paitaa Pekka ihailee
 ketä Merjaa Pekka ihailee
 Pekka ihailee Merjaa
 Pekka ihailee yhtä Merjaa
 
 kaksi yliopiston nuorta miestä jahtasi yhtä Merjaa
 kaksi nuorta miestä jahtasi yhtä Merjaa
-Minttu ja Merja löysivät sopimuksen ostivat paidan ja ostivat takin
-Minttu ja Merja löysivät sopimuksen Pekka osti paidan ja Merja osti takin
 
 yhtä nuorta miestä joka jahtasi yhtä Merjaa joka jahtasi kahta nuorta miestä
 yliopiston kaksi nuorta miestä jahtasi yhtä Merjaa
@@ -34,10 +40,6 @@ kaksi jahtasi Merjaa
 
 kaunis ja nuori Merja
 Minttu ja kaunis nuori Merja löysivät sopimuksen
-Minttu ja kaunis ja nuori Merja löysivät sopimuksen
-Minttu ja Merja löysivät sopimuksen
-Pekka osti paidan ja Merja osti takin
-Pekka ja Merja Minttu löysivät sopimuksen
 Pekka Merja ja Minttu löysivät sopimuksen
 
 eiF Pekka ollut antanut Merjalle kukkia

@@ -38,7 +38,8 @@ yliopiston :: N:gen|acc ag:nGenSg -ag:nGenSg|nGenPl, =rel
 tähtien :: N:gen|acc -ag:nGenSg|nGenPl ag:nGenPl, =rel
 paitaa :: -ag:nGenSg|nGenPl N:prtSg -a:nPrtSg -a:prtSg, =rel
 
-ja :: N:nom3pl -a a
+ja :: N:nom3pl -a:n|a a:n|a
+jaV :: N:nom3pl -a:v a:v
 
 # Pekan :: N:acc|gen =N:prt|acc|nom3sg
 Pekan :: N:gen|gen
@@ -86,7 +87,7 @@ jonka :: rel:jo =T, moves N:acc
 joka :: rel:jo =T, moves N:nom3sg
 whom :: rel:wh =T, moves N:acc =Ting
 who :: Q rel:wh =T, moves N:nom3sg|acc =Ting
-kenen :: Q rel:wh =T, moves N:gen a:nGenSg
+kenen :: Q rel:wh =T, moves N:gen ag:nGenSg
 jota :: rel:jo, moves N:prt, =T
 ketä :: Q rel:wh =T, moves N:prt =N:prtSg
 

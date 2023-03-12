@@ -1,6 +1,7 @@
 import json
 import math
 import socket
+from operator import attrgetter
 
 from kivy.app import App
 from kivy.uix.button import Button
@@ -424,11 +425,12 @@ class Network(Widget):
 
         if good_routes:
             good_route_strs = []
+            good_routes.sort(key=attrgetter('size', 'weight'), reverse=True)
             for route in good_routes:
                 good_route = route.tree()
                 good_route_strs.append(good_route)
                 good_route_strs.append("")
-                print(route, route.weight)
+                print(route, route.rs, route.weight)
 
             if self.send(json.dumps(good_route_strs)):
                 print(f'sent {len(good_routes)} good routes to kataja')
