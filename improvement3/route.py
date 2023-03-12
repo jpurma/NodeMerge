@@ -150,6 +150,8 @@ class Route:
                 return
             elif other_route.rs.head in self.rs.used_movers:
                 return
+            elif other_route.rs.head in self.rs.movers:
+                return
             # Avoid splitting words
             elif other_route.rs.head < self.rs.head and self.wp.li.lex_parts.index(self.wp.li):
                 return
@@ -158,14 +160,10 @@ class Route:
         elif type == LONG_DISTANCE_ARGUMENT:
             if self.arg:
                 return
-            elif other_route.rs.head not in other_route.rs.movers:
-                return
-            elif other_route.rs.head in self.rs.used_movers:
-                return
-            elif other_route.rs.neighbors_due_movement(self.rs):
+            elif other_route.rs.is_lower_neighbor_due_movement_for(self.rs):
                 new_combination = Route(self, arg=other_route)
         elif type == ADJUNCTION:
-            if other_route.rs.are_neighbors(self.rs) or other_route.rs.neighbors_due_movement(self.rs):
+            if other_route.rs.are_neighbors(self.rs) or other_route.rs.is_lower_neighbor_due_movement_for(self.rs):
                 new_combination = Route(self, adjunct=other_route)
         elif type == PART:
             if self.part:

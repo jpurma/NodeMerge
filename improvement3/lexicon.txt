@@ -99,6 +99,7 @@ admire :: v block, =N:acc
 did :: Q T:pst =DOES moves, DOES =N:nom3sg, =T:pst
 does :: Q T:prees =DOES moves, DOES =N:nom3sg, =v
 admires :: T:prees =N:nom3sg -a:v, =N:acc|Ting -a:v
+likes :: T:prees =N:nom3sg -a:v, =N:acc|Ting -a:v
 ihailee :: T:prees =N:nom3sg -a:v, =N:prt|prtSg|prtPl
 ihailen :: T:prees =N:nom1sg -a:v, =N:prt
 ihaile :: v:inf -a:v, =N:prt

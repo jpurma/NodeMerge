@@ -49,36 +49,23 @@ class RouteSignal:
         return f'<RouteSignal low:{self.low}, head: {self.head} high:{self.high}, movers:{self.movers}, ' \
                f'used:{self.used_movers}>'
 
-    def neighbors_due_movement(self, other):
+    def is_lower_neighbor_due_movement_for(self, other):
         if self.head == other.head:
             return False
-        if self.head < other.head:
-            lower = self
-            higher = other
-        else:
-            lower = other
-            higher = self
-        if (lower.head in lower.movers
-              and lower.high < higher.low
-              and not lower.movers & higher.movers):
-            print('           *** mover -based neighbor: ', self, other)
-            for route in higher.route.wp.li.routes_down:
-                if route.rs.used_movers & lower.movers:
-                    print('           reject mover ', lower, ' because it has better use for that mover: ', route)
-                    return False
+        if (self.head in self.movers  # 1. must be mover
+              and self.high < other.low  # 2. must not be contained in where it is moved
+              and self.head not in other.used_movers  # 3. mover must not be used
+              and self.head not in other.movers):  # 4. mover must not be same structure (prob. not necessary because 2.)
             return True
         return False
 
     def are_neighbors(self, other):
+        return self.is_lower_neighbor_of(other) or other.is_lower_neighbor_of(self)
+
+    def is_lower_neighbor_of(self, other):
         if self.head == other.head:
             return False
-        if self.head < other.head:
-            lower = self
-            higher = other
-        else:
-            lower = other
-            higher = self
-        return lower.high == higher.low - 1
+        return self.high == other.low - 1
 
     def routes_overlap(self, other):
         if not other:

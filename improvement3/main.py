@@ -10,7 +10,7 @@ from kivy.core.window import Window
 from improvement3.edges import RouteEdge
 from nodes import *
 from word_parts import WordPart, WordPartList
-from route import Route, COMPLETE_ROUTES
+from route import Route
 
 N_SIZE = 3
 WIDTH = 1600
@@ -251,12 +251,17 @@ class Network(Widget):
             print(f' *** Revisiting {wp} ***')
             print(f' routes to walk: {wp.li.routes_down}')
             for route in wp.li.routes_down:
-                if route.wp is wp:
+                if route.wp is wp and len(route) == 1:
                     route.walk_all_routes_up()
-                    if not COMPLETE_ROUTES:
-                        break
-            Route(None, wp=wp).walk_all_routes_up()
         if self.words.is_last():
+            for wp in self.words.word_parts:
+                print()
+                print(f' *** Revisiting one last time: {wp} ***')
+                print(f' routes to walk: {wp.li.routes_down}')
+                for route in wp.li.routes_down:
+                    if route.wp is wp and len(route) == 1:
+                        route.walk_all_routes_up()
+
             print('****************************************')
             print('*                                      *')
             print('* Done parsing, now pick optimal route *')
