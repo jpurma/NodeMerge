@@ -1,3 +1,45 @@
+Pekka sanoi että se väite että teoria hylättiin kumoutui
+Pekka sanoi että se väite että teoria kumoutui hylättiin
+
+kenen nimmaria ilman jäätyään Merja palasi suruissaan kotiin
+Merja palasi suruissaan kotiin jäätyään ilman Jarin nimmaria
+jäätyään ilman kenen nimmaria Merja palasi suruissaan kotiin
+kenen nimmaria jäätyään ilman Merja palasi suruissaan kotiin
+Merja palasi suruissaan kotiin jäätyään ilman kenen nimmaria
+Merja palasi suruissaan kotiin ilman jäätyään kenen nimmaria
+
+jäätyään ilman Jarin nimmaria Merja palasi suruissaan kotiin
+Jarin nimmaria ilman jäätyään Merja palasi suruissaan kotiin
+Jarin nimmaria jäätyään ilman Merja palasi suruissaan kotiin
+Merja palasi suruissaan kotiin ilman jäätyään Jarin nimmaria
+
+Merja palasi suruissaan kotiin jäätyään ilman Pekan nimmaria
+
+antaako Merja kukan yksin
+antaako Merja kukan
+antaako kukan Merja
+yksinkö Merja antaa kukan
+
+eikö Pekka ollut antanut Merjalle kukkia
+eikö ollut Pekka antanut Merjalle kukkia
+eiF Pekka ollut antanut Merjalle kukkia
+ei Pekka ei ollut antanut Merjalle kukkia
+Pekka ei ollut antanut Merjalle kukkia
+ei ollut Pekka antanut Merjalle kukkia
+eiF ollut Pekka antanut Merjalle kukkia
+ei ollut antanut Merjalle kukkia Pekka
+Pekka ihailee Merjaa
+Pekka ei antanut Merjalle kauniita kukkia yksin
+Pekka ei antanut kauniita yksin kukkia Merjalle
+Pekka ei antanut kauniita yksin Merjalle kukkia
+Pekka ei antanut kukkia Merjalle
+eiF Pekka antanut Merjalle kukkia
+Pekka ei antanut Merjalle kukkia
+Pekka ei ollut antanut Merjalle kukkia
+sad young Pekka mostly admires sad young Merja faintly
+Pekka joka MerjalleF kukkiaF osti
+Pekka joka osti Merjalle kukkia
+
 kenen paitaa Pekka ihailee
 
 Minttu ja kaunis ja nuori Merja löysivät sopimuksen
@@ -42,29 +84,6 @@ kaunis ja nuori Merja
 Minttu ja kaunis nuori Merja löysivät sopimuksen
 Pekka Merja ja Minttu löysivät sopimuksen
 
-eiF Pekka ollut antanut Merjalle kukkia
-ei Pekka ei ollut antanut Merjalle kukkia
-Pekka ei ollut antanut Merjalle kukkia
-ei ollut Pekka antanut Merjalle kukkia
-eiF ollut Pekka antanut Merjalle kukkia
-ei ollut antanut Merjalle kukkia Pekka
-eikö Pekka ollut antanut Merjalle kukkia
-antaako Merja kukan yksin
-Pekka ihailee Merjaa
-Pekka ei antanut Merjalle kauniita kukkia yksin
-Pekka ei antanut kauniita yksin kukkia Merjalle
-Pekka ei antanut kauniita yksin Merjalle kukkia
-Pekka ei antanut kukkia Merjalle
-eiF Pekka antanut Merjalle kukkia
-Pekka ei antanut Merjalle kukkia
-Pekka ei ollut antanut Merjalle kukkia
-antaako Merja kukan
-antaako kukan Merja
-sad young Pekka mostly admires sad young Merja faintly
-Pekka joka MerjalleF kukkiaF osti
-Pekka joka osti Merjalle kukkia
-yksinkö Merja antaa kukan
-
 
 kenen hiuksia Pekka ihaili
 Pekka ihailee kukkaa jota ilman Merja ei pärjää
@@ -80,21 +99,6 @@ Pekka ihailee kukkaa jota Merja ihailee
 Pekka ihailee kukkaa jota Merja ei pärjää ilman
 Pekka ihailee kukkaa jota Merja ei ilman pärjää
 
-jäätyään ilman kenen nimmaria Merja palasi suruissaan kotiin
-kenen nimmaria ilman jäätyään Merja palasi suruissaan kotiin
-kenen nimmaria jäätyään ilman Merja palasi suruissaan kotiin
-Merja palasi suruissaan kotiin jäätyään ilman kenen nimmaria
-Merja palasi suruissaan kotiin ilman jäätyään kenen nimmaria
-
-jäätyään ilman Jarin nimmaria Merja palasi suruissaan kotiin
-Jarin nimmaria ilman jäätyään Merja palasi suruissaan kotiin
-Jarin nimmaria jäätyään ilman Merja palasi suruissaan kotiin
-Merja palasi suruissaan kotiin jäätyään ilman Jarin nimmaria
-Merja palasi suruissaan kotiin ilman jäätyään Jarin nimmaria
-
-kenen nimmaria ilman jäätyään Merja palasi suruissaan kotiin
-Merja palasi suruissaan kotiin jäätyään ilman Pekan nimmaria
-kenen nimmaria ilman jäätyään Merja palasi suruissaan kotiin
 sad young Pekka
 who he saw admiring him
 Pekka admires Merja who he saw admiring him

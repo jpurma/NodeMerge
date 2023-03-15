@@ -24,6 +24,9 @@ class RouteSignal:
             print('     rs: adding argument ', arg.route, arg, ' to ', route.parent, self)
             if self.movers or arg.movers:
                 print(' rs: arg w. mover:', self.movers, arg.movers, arg.route.wp, route.wp)
+            if self.head in self.movers:
+                self.movers.remove(self.head)
+                self.used_movers.add(self.head)
             self.movers -= arg.used_movers
             self.used_movers |= arg.used_movers
             if arg.head in self.movers:

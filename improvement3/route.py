@@ -160,6 +160,10 @@ class Route:
             if self.arg:
                 return
             elif other_route.rs.is_lower_neighbor_due_movement_for(self.rs):
+                print('long distance argument: ', other_route, self)
+                new_combination = Route(self, arg=other_route)
+            elif self.rs.is_lower_neighbor_due_movement_for(other_route.rs):
+                print('reversed long distance argument: ', other_route, self)
                 new_combination = Route(self, arg=other_route)
         elif type == ADJUNCTION:
             if other_route.rs.are_neighbors(self.rs):
@@ -187,6 +191,7 @@ class Route:
             print(f'  {self.sg}:            => {new_combination}')
             print(f'  {self.sg}:  new combination: {new_combination} ({new_combination.rs})')
             new_combination.add_route_edges()
+            new_combination.weight = self.weight + other_route.weight
             self.wp.li.routes_down.insert(0, new_combination)
             self.wp.li.routes_down.sort(key=attrgetter('size', 'weight'), reverse=True)
             new_combination.walk_all_routes_up()
