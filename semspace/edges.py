@@ -1,6 +1,8 @@
+import math
+
 from kivy.graphics import *
 from util import hue
-from ctrl import ctrl
+from ctrl import ctrl, MARGIN_X, MARGIN_Y
 
 
 class Edge:
@@ -11,10 +13,16 @@ class Edge:
         self.start = start
         self.end = end
         self.hue = 0
-        self.loss = 0.03
+        self.loss = 0.01  # 0.03
+        self.length = math.dist((start.x, start.y), (end.x, end.y))
+        self.log_length = math.log10(self.length)
+        self.weakening = self.loss * self.log_length
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self.id})'
+
+    def __lt__(self, other):
+        return self.id < other.id
 
     def get_signal(self, signal):
         if isinstance(signal, str):
@@ -22,48 +30,66 @@ class Edge:
         return self.activations.get(signal.key, None)
 
     def draw(self):
-        pass
-        # with ctrl.g.canvas:
-        #     x_diff = 0
-        #     y_diff = 0
-        #     for signal in self.activations.values():
-        #         if len(signal.parts) > 1:
-        #             for signal_part in signal.parts:
-        #                 Color(hue(signal_part), 0.8, signal.strength, mode='hsv')
-        #                 Point(points=[self.start.x + x_diff, self.start.y + y_diff, self.end.x + x_diff, self.end.y +
-        #                           y_diff], pointsize=2)
-        #                 x_diff += 2
-        #             x_diff += 2
+        if not self.activations:
+            return
+        with ctrl.g.canvas:
+            x_diff = 0
+            y_diff = 0
+            sx = self.start.x + MARGIN_X
+            sy = self.start.y + MARGIN_Y
+            ex = self.end.x + MARGIN_X
+            ey = self.end.y + MARGIN_Y
+
+            # if sx > ex or sy > ey:
+            #     y_diff += 2
+            #     x_diff += 2
+            #     h = 0.5
+            # else:
+            #     h = 0
+            # Color(h, 0, 0.3, mode='hsv')
+            # Line(points=[sx + x_diff, sy + y_diff, ex + x_diff, ey +
+            #              y_diff], width=1)
+            for signal in self.activations.values():
+                if signal.is_seeker():
+                    w = 0.5
+                    s = 0.3
+                    if (inbound_start_signal := self.start.get_inbound_signal(signal)) and inbound_start_signal.strength:
+                        w = 2
+                        s = 0.9
+                    for signal_part in signal.parts:
+                        Color(hue(signal_part), s, signal.strength * 2, mode='hsv')
+                        Line(points=[sx + x_diff, sy + y_diff, ex + x_diff, ey +
+                                     y_diff], width=w)
+                        x_diff += 1
+                elif signal.is_inwards() and False:
+                    Color(hue(signal.parts[0]), 0.5, signal.strength / 2, mode='hsv')
+                    Line(points=[sx + x_diff, sy + y_diff, ex + x_diff, ey +
+                                 y_diff], width=0.5)
+                x_diff += 1
 
     def set_signal(self, signal):
         existing = self.activations.get(signal.key, None)
         if (not existing) or existing.strength < signal.strength:
             self.activations[signal.key] = signal
 
-    def activate(self, signal):
+    def activate(self, signal, loss=0):
         if not signal or signal.strength <= 0:
             return
-        if len(signal.parts) > 1:
-            # seeker signal
-            if (not (existing := self.get_signal(signal))) or signal.strength > existing.strength:
-                # weaken also seeker signals to avoid them looping infinitely
-                weakened_signal = signal.copy() #.weaken(self.loss / 2)
-                if weakened_signal:
-                    self.activations[signal.key] = weakened_signal
-                    self.end.activate(weakened_signal)
+        existing_activation = self.get_signal(signal)
+        if (existing_activation
+                and (signal.strength < existing_activation.strength
+                or (signal.strength == existing_activation.strength and signal.is_outgoing()))):
+            return
+        signal = signal.copy()
+        self.activations[signal.key] = signal
+        if signal.is_seeker():
+            # seeker signal has parts (source_head, target_attr)
+            # replace weaker signal with current stronger one and activate edge end node
+            # weaken seeker signals to avoid them looping infinitely?
+            self.end.activate(signal, loss or self.loss)
         else:
-            # outbound activation, preparing the strongest route back to initial node
-            end_signal = self.end.get_signal(signal)
-            my_activation = self.get_signal(signal)
-            if signal.strength > 0 and \
-                    ((not my_activation) or my_activation.strength < signal.strength - self.loss):
-                if end_signal and end_signal.strength > signal.strength - self.loss:
-                    self.set_signal(end_signal)
-                else:
-                    weakened_signal = signal.copy().weaken(self.loss)
-                    if weakened_signal:
-                        self.set_signal(weakened_signal)
-                        self.end.activate(weakened_signal)
+            # outbound signal marks nodes for their distance to signal source
+            self.end.activate(signal, self.weakening)
 
     def reset(self):
         self.activations = {}
@@ -79,4 +105,3 @@ class Edge:
     @staticmethod
     def get_or_create(start, end):
         return Edge.get(start, end) or __class__(start, end)
-

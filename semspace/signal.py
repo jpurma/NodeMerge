@@ -1,16 +1,24 @@
 
 class Signal:
-    def __init__(self, parts, strength, key=None):
+    def __init__(self, parts, strength, outgoing=False, key=None):
         self.parts = parts
         self.strength = strength
-        self.trace_strength = 0
-        self.key = key or '-'.join(str(part) for part in parts)
+        if key:
+            self.key = key
+        else:
+            if len(parts) == 1:
+                if outgoing:
+                    self.key = str(parts[0]) + '>'
+                else:
+                    self.key = str(parts[0]) + '<'
+            else:
+                self.key = '-'.join(str(part) for part in parts)
 
     def __repr__(self):
-        return f'S{self.parts}:{self.strength}'
+        return f'S{self.key}:{self.strength}'
 
     def copy(self):
-        return Signal(self.parts, self.strength, self.key)
+        return Signal(self.parts, self.strength, key=self.key)
 
     def weaken(self, loss):
         self.strength -= loss
@@ -18,15 +26,16 @@ class Signal:
             return None
         return self
 
+    def is_outgoing(self):
+        return self.key.endswith('>')
+
+    def is_inwards(self):
+        return self.key.endswith('<')
+
+    def is_seeker(self):
+        return len(self.parts) > 1
+
     def __eq__(self, other):
         if not isinstance(other, Signal):
             return False
         return other.key == self.key
-
-    def __hash__(self):
-        multip = 1
-        sum = 0
-        for part in self.parts:
-            sum += multip * part
-            multip *= 100
-        return sum

@@ -1,9 +1,11 @@
+from collections import defaultdict
+
 from kivy.uix.label import Label
 from kivy.graphics import *
 
-from util import hue, find_edge
+from util import hue, find_edge, replace
 from edges import Edge, LexEdge, AdjunctEdge, MergeEdge
-from ctrl import ctrl
+from ctrl import ctrl, decay_threshold, decay_function
 
 
 class Node:
@@ -18,7 +20,7 @@ class Node:
         self.edges_in = []
         self.x = 0
         self.y = 0
-        self.activations = []
+        self.activations = {}
         self.active = False
         self.label_item = None
 
@@ -35,17 +37,30 @@ class Node:
         if edge not in other.edges_in:
             other.edges_in.append(edge)
 
-    def activate(self, n, source=None):
+    def activate(self, n, strength=1.0, source=None):
         if n not in self.activations:
-            self.activations.append(n)
+            self.activations[n] = strength
             self.active = True
             for out in self.edges_out:
-                out.activate(n)
+                out.activate(n, strength)
         self.active = bool(self.activations)
 
+    def decay(self):
+        for signal, strength in list(self.activations.items()):
+            new_strength = decay_function(strength)
+            if new_strength < decay_threshold:
+                del self.activations[signal]
+            else:
+                self.activations[signal] = new_strength
+
     def deactivate(self):
-        self.activations = {}
+        self.activations.clear()
         self.active = False
+
+    def merge_activations(self, old_value, new_value):
+        self.activations = replace(self.activations, old_value, new_value)
+        for edge in self.edges_out:
+            edge.merge_activations(old_value, new_value)
 
     def reset(self):
         self.deactivate()
@@ -72,13 +87,13 @@ class Node:
             Color(*self.color)
             r = 16
             Line(circle=[self.x, self.y, r], width=1)
-            for activation in self.activations:
+            for activation, weight in self.activations.items():
                 if not isinstance(activation, tuple):
                     activation = [activation]
                 for signal in activation:
                     Color(hue(signal), 0.8, 0.5, mode='hsv')
-                    Line(circle=[self.x, self.y, r], width=4)
-                    r += 4
+                    Line(circle=[self.x, self.y, r], width=weight * 5)
+                    r += weight * 5
 
 
 class LexicalNode(Node):
@@ -98,6 +113,7 @@ class LexicalNode(Node):
         self.routes_down = []
         self.route_edges = []
         self.lex_parts = lex_parts
+        self.order_counter = 0
         self.info_item = None
         for f_node in feats:
             self.connect(f_node)
@@ -105,13 +121,16 @@ class LexicalNode(Node):
             self.connect(c_node)
             c_node.connect(self)
 
-    def activate(self, n, source=None):
+    def activate(self, n, strength=1.0, source=None):
         if n not in self.activations:
-            self.activations.append(n)
-            if self.activations:
-                for out in self.edges_out:
-                    out.activate(n)
+            self.activations[n] = 1
+            for out in self.edges_out:
+                out.activate(n, strength)
         self.active = bool(self.activations)
+
+    def refresh_activation(self, n, strength):
+        print('refresh activation at ', self, n, strength)
+        self.activate(n, strength)
 
     def count_routes_down(self):
         edges_by_signal = {}
@@ -122,14 +141,18 @@ class LexicalNode(Node):
                 edges_by_signal[edge.end_signal].add(edge.origin)
         return '\n'.join(f'{signal}: {len(edges)}' for signal, edges in edges_by_signal.items())
 
+    def get_next_order_counter(self):
+        self.order_counter += 1
+        return self.order_counter
+
     def add_label(self):
         self.label_item = Label(text=self.id)
         self.label_item.x = self.x - 20
         self.label_item.y = self.y - 10
-        words = ctrl.words
-        if words and words.current_item and words.current_item.li is self:
+        signaler = ctrl.signaler
+        if signaler and signaler.current_item and signaler.current_item.li is self:
             self.label_item.color = [1.0, 0.5, 0.5]
-        elif words and words.closest_item and words.closest_item.li is self:
+        elif signaler and signaler.closest_item and signaler.closest_item.li is self:
             self.label_item.color = [1.0, 0.4, 1.0]
         elif self.active:
             self.label_item.color = [1.0, 1.0, 0.4]
@@ -219,15 +242,14 @@ class PosFeatureNode(FeatureNode):
         assert fstring not in ctrl.features
         ctrl.features[fstring] = self
 
-    def activate(self, n, source=None):
+    def activate(self, n, strength=1.0, source=None):
         if n not in self.activations:
-            self.activations.append(n)
+            self.activations[n] = strength
             for out in self.edges_out:
-                out.activate(n)
+                out.activate(n, strength)
             self.active = True
 
-        if not self.activations:
-            self.active = False
+        self.active = bool(self.activations)
 
 
 class NegFeatureNode(FeatureNode):
@@ -245,8 +267,8 @@ class NegFeatureNode(FeatureNode):
             self.name = name_string
             self.values = []
         assert fstring not in ctrl.features
-        self.lex_activations = []
-        self.feat_activations = []
+        self.lex_activations = {}
+        self.feat_activations = {}
         ctrl.features[fstring] = self
 
     def connect_positive(self):
@@ -257,28 +279,30 @@ class NegFeatureNode(FeatureNode):
                     and feat.values_match(self):
                feat.connect(self)
 
-    def activate(self, n, source=None):
+    def activate(self, n, strength=1.0, source=None):
         if not self.activations:
-            self.lex_activations = []
-            self.feat_activations = []
+            self.lex_activations.clear()
+            self.feat_activations.clear()
             self.active = False
-        if n not in self.activations:
-            self.activations.append(n)
+        if n in self.activations:
+            self.activations[n] += strength
+        else:
+            self.activations[n] = strength
         if source:
             if isinstance(source.start, (LexicalNode, CategoryNode)):
                 if n not in self.lex_activations:
-                    self.lex_activations.append(n)
+                    self.lex_activations[n] = strength
                     for arg_signal in self.feat_activations:
                         for out in self.edges_out:
-                            out.activate((n, arg_signal))
+                            out.activate((n, arg_signal), strength)
                         self.active = True
             else:
                 if n not in self.feat_activations:
                     if self.sign == '-' or n not in self.lex_activations:
-                        self.feat_activations.append(n)
+                        self.feat_activations[n] = strength
                         for head_signal in self.lex_activations:
                             for out in self.edges_out:
-                                out.activate((head_signal, n))
+                                out.activate((head_signal, n), strength)
                             self.active = True
 
     def activated_at(self, signal):
@@ -289,6 +313,11 @@ class NegFeatureNode(FeatureNode):
                 if signal == head_signal:
                     return True
 
+    def merge_activations(self, old_value, new_value):
+        super(NegFeatureNode, self).merge_activations(old_value, new_value)
+        self.activations = replace(self.lex_activations, old_value, new_value)
+        self.activations = replace(self.feat_activations, old_value, new_value)
+
 
 class CategoryNode(Node):
     color = [0.5, 0.75, 0.75, 0.5]
@@ -298,9 +327,11 @@ class CategoryNode(Node):
         self.category = category
         ctrl.categories.append(self)
 
-    def activate(self, n, source=None):
-        if n not in self.activations:
-            self.activations.append(n)
+    def activate(self, n, strength=1.0, source=None):
+        if n in self.activations:
+            self.activations[n] += strength
+        else:
+            self.activations[n] = strength
         self.active = bool(self.activations)
 
 
@@ -309,8 +340,8 @@ class MergeNode(Node):
 
 
 class SymmetricMergeNode(MergeNode):
-    def activate(self, n, source=None):
-        right_signal = ctrl.words.current_item.signal
+    def activate(self, n, strength=1.0, source=None):
+        right_signal = ctrl.signaler.current_item.signal
         accepted_signals = []
         for e in self.edges_in:
             if e.activations and isinstance(e.start, FeatureNode):
@@ -323,61 +354,21 @@ class SymmetricMergeNode(MergeNode):
         print('  Nodes: accepted signals at symmetric merge: ', accepted_signals)
         print('  Nodes: n: ', n)
         if n in accepted_signals:
-            self.activations.append(n)
+            if n not in self.activations:
+                self.activations[n] = strength
+            else:
+                self.activations[n] += strength
             print(f'  Nodes: at {self.id} adding left/right merge {n[0]}<->?{n[1]} where {n[0]} is head')
             ctrl.g.add_merge(n[0], n[1])
             for out in self.edges_out:
                 for n in accepted_signals:
-                    out.activate(n)
+                    out.activate(n, strength)
         self.active = bool(self.activations)
 
 
-# class LeftMergeNode(MergeNode):
-#     def activate(self, n):
-#         arg_signal = ctrl.words.current_item.signal
-#         accepted_signals = []
-#         for e in self.edges_in:
-#             if e.activations and isinstance(e.start, FeatureNode):
-#                 for head_signal_in, arg_signal_in in e.activations:
-#                     if arg_signal_in == arg_signal:
-#                         accepted_signals.append((head_signal_in, arg_signal_in))
-#         print('accepted signals at left merge: ', accepted_signals)
-#         print('n: ', n)
-#         if n in accepted_signals:
-#             self.activations.append(n)
-#             print(f'at {self.id} adding left merge {n[0]}<-{n[1]}')
-#             ctrl.g.add_merge(n[0], n[1])
-#             for out in self.edges_out:
-#                 for n in accepted_signals:
-#                     out.activate(n)
-#         self.active = bool(self.activations)
-#
-#
-# class RightMergeNode(MergeNode):
-#     def activate(self, n):
-#         head_signal = ctrl.words.current_item.signal
-#         accepted_signals = []
-#         for e in self.edges_in:
-#             if e.activations and isinstance(e.start, FeatureNode):
-#                 for head_signal_in, arg_signal_in in e.activations:
-#                     if head_signal_in == head_signal:
-#                         accepted_signals.append((head_signal_in, arg_signal_in))
-#
-#         print('accepted signals at right merge: ', accepted_signals)
-#         print('n: ', n)
-#         if n in accepted_signals:
-#             self.activations.append(n)
-#             print(f'at {self.id} adding right merge {n[0]}->{n[1]}')
-#             ctrl.g.add_merge(n[0], n[1])
-#             for out in self.edges_out:
-#                 for n in accepted_signals:
-#                     out.activate(n)
-#         self.active = bool(self.activations)
-
-
 class SymmetricPairMergeNode(MergeNode):
-    def activate(self, n, source=None):
-        right_signal = ctrl.words.current_item.signal
+    def activate(self, n, strength=1.0, source=None):
+        right_signal = ctrl.signaler.current_item.signal
         accepted_signals = []
         for e in self.edges_in:
             if e.activations and isinstance(e.start, FeatureNode):
@@ -389,45 +380,20 @@ class SymmetricPairMergeNode(MergeNode):
         print('  Nodes: accepted signals at symmetric merge: ', accepted_signals)
         print('  Nodes: n: ', n)
         if n in accepted_signals:
-            self.activations.append(n)
+            if n not in self.activations:
+                self.activations[n] = strength
+            else:
+                self.activations[n] += strength
             print(f'  Nodes: at {self.id} adding pair merge {n[0]}<->?{n[1]} where {n[0]} is -')
             ctrl.g.add_adjunction(n[0], n[1])
             for out in self.edges_out:
                 for n in accepted_signals:
-                    out.activate(n)
+                    out.activate(n, strength)
         self.active = bool(self.activations)
 
 
-# class PairMergeNode(MergeNode):
-#     # Viimeksi jäi epäselväksi onko meillä tarve erilliselle Mergeille vasemmalle ja oikealle, vai riittääkö
-#     # symmetrinen merge ja symmetrinen parimerge, ja asymmetria tulisi signaalien järjestyksen kautta. Nykyiset
-#     # mergejen laukaisijat eivät välitä suunnasta. Sen sijaan että olisi esivalintaa mitkä elementit ovat
-#     # mergettävissä, nyt vaikea (laskennallinen) osuus tulisi siitä että mahdollisten mergejen vyyhdistä valitaan
-#     # 'optimaalisin'. Vaikka noodi on symmetrinen, eli samaa noodia käytetään mergettäessä vasemmalle tai oikealle,
-#     # se on kuitenkin asymmetrinen lopputulokseltaan, eli negatiivisen piirteen omistajasta tulee pää, positiivisen
-#     # piirteen omistajasta argumentti.
-#     # Tähän liittyi se, että parimergen käynnistävät piirteet voisi muuttaa tuttuun negatiivisen ja positiivisen
-#     # piirteen tarkistamiseen, mutta pitää silti erillään niillä olisi silloin joku eri merkki, vaikka '-'.
-#     def activate(self, n):
-#         if n not in self.activations:
-#             right_signal = ctrl.words.current_item.signal
-#             if right_signal not in n:
-#                 return
-#             for e in self.edges_in:
-#                 if e.activations:
-#                     print('incoming pair merge activations: ', e.activations)
-#                     print('from source: ', e.start)
-#             print('activating adj merge with n: ', n)
-#             self.activations.append(n)
-#             print(f'at {self.id} adding pair merge ', n)
-#             ctrl.g.add_adjunction(n[0], n[1])
-#             for out in self.edges_out:
-#                 out.activate(n)
-#         self.active = bool(self.activations)
-
-
 class MergeOkNode(Node):
-    def activate(self, n, source=None):
+    def activate(self, n, strength=1.0, source=None):
         if n not in self.activations:
-            self.activations.append(n)
+            self.activations[n] = strength
         self.active = bool(self.activations)
